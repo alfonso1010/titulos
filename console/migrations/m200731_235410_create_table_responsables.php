@@ -19,7 +19,7 @@ class m200731_235410_create_table_responsables extends Migration
 
         
         $this->createTable('responsables', [
-            'id' => $this->integer(11)->unsigned()->notNull()->append('PRIMARY KEY'),
+            'id' => $this->integer(11)->unsigned()->notNull()->append('AUTO_INCREMENT PRIMARY KEY'),
             'nombre' => $this->string(80)->notNull(),
             'primerApellido' => $this->string(80)->notNull(),
             'segundoApellido' => $this->string(80),

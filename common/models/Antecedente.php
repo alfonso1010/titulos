@@ -37,8 +37,8 @@ class Antecedente extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['idAntecedente', 'institucionProcedencia', 'idTipoEstudioAntecedente', 'tipoEstudioAntecedente', 'idEntidadFederativa', 'entidadFederativa', 'fechaTerminacion', 'folioControl', 'curpProfesionista'], 'required'],
-            [['idAntecedente', 'idTipoEstudioAntecedente'], 'integer'],
+            [['institucionProcedencia', 'idTipoEstudioAntecedente', 'tipoEstudioAntecedente', 'idEntidadFederativa', 'entidadFederativa', 'fechaTerminacion', 'folioControl', 'curpProfesionista'], 'required'],
+            [['idTipoEstudioAntecedente'], 'integer'],
             [['fechaInicio', 'fechaTerminacion'], 'safe'],
             [['institucionProcedencia', 'tipoEstudioAntecedente', 'idEntidadFederativa', 'entidadFederativa', 'noCedula', 'folioControl'], 'string', 'max' => 100],
             [['curpProfesionista'], 'string', 'max' => 18],

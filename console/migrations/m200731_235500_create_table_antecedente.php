@@ -18,7 +18,7 @@ class m200731_235500_create_table_antecedente extends Migration
         }
 
         $this->createTable('antecedente', [
-            'idAntecedente' => $this->integer(11)->unsigned()->notNull()->append('PRIMARY KEY'),
+            'idAntecedente' => $this->integer(11)->unsigned()->notNull()->append('AUTO_INCREMENT PRIMARY KEY '),
             'institucionProcedencia' => $this->string(100)->notNull(),
             'idTipoEstudioAntecedente' => $this->integer(11)->notNull(),
             'tipoEstudioAntecedente' => $this->string(100)->notNull(),

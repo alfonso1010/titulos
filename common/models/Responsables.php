@@ -38,8 +38,8 @@ class Responsables extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id', 'nombre', 'primerApellido', 'curp', 'idCargo', 'cargo', 'noCertificadoResponsable', 'cveInstitucion'], 'required'],
-            [['id', 'idCargo'], 'integer'],
+            [['nombre', 'primerApellido', 'curp', 'idCargo', 'cargo', 'noCertificadoResponsable', 'cveInstitucion'], 'required'],
+            [['idCargo'], 'integer'],
             [['sello', 'certificadoResponsable'], 'string'],
             [['nombre', 'primerApellido', 'segundoApellido', 'curp', 'cargo', 'abrTitulo', 'noCertificadoResponsable'], 'string', 'max' => 80],
             [['cveInstitucion'], 'string', 'max' => 7],
