@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TituloElectronico xmlns="https://www.siged.sep.gob.mx/titulos/" version="1.0" folioControl="20121023SICERT0151610X0042086X00013">
+ <FirmaResponsables>
+  <FirmaResponsable nombre="Responsable 1" primerApellido="apellido1" segundoApellido="apellido1" curp="AEMA1" idCargo="1" cargo="CARGO 1" abrTitulo="ARB1" sello="SELLO 1" certificadoResponsable="" noCertificadoResponsable="1000000401880220"/>
+  <FirmaResponsable nombre="Responsable 2" primerApellido="apellido2" segundoApellido="apellido2" curp="AEMA2" idCargo="2" cargo="CARGO 2" abrTitulo="ARB2" sello="2" certificadoResponsable="" noCertificadoResponsable="1000000401880220"/>
+ </FirmaResponsables>
+ <Institucion cveInstitucion="90002" nombreInstitucion="UNITEC"/>
+ <Carrera cveCarrera="515237" nombreCarrera="SISTEMAS" fechaInicio="2007-01-01" fechaTerminacion="2009-01-01" idAutorizacionReconocimiento="1" autorizacionReconocimiento="AUTORIZA FEDERAL"/>
+ <Profesionista curp="AEMA961010HMCRNL07" nombre="Alfonso" primerApellido="Arellanes" segundoApellido="Mendoza" correoElectronico="alfonso@ass.com"/>
+ <Expedicion fechaExpedicion="2009-01-01" idModalidadTitulacion="12" modalidadTitulacion="MODALIDAD PRESENCIAL" fechaExamenProfesional="2009-01-01" cumplioServicioSocial="1" idFundamentoLegalServicioSocial="1" fundamentoLegalServicioSocial="LEGALSOCIAL" idEntidadFederativa="1" entidadFederativa="MX"/>
+ <Antecedente institucionProcedencia="PROCEDE UNICTEC" idTipoEstudioAntecedente="1" tipoEstudioAntecedente="1" idEntidadFederativa="1" entidadFederativa="MX" fechaInicio="2009-01-04" fechaTerminacion="2019-01-01"/>
+</TituloElectronico>

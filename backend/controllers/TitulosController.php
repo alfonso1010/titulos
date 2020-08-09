@@ -47,6 +47,263 @@ class TitulosController extends Controller
         return $behaviors;
     }
 
+ 
+    public function actionFirmarxml()
+    {
+        $busca_instituciones =  ArrayHelper::map(
+            Institucion::find()
+            ->all(),
+            'cveInstitucion',
+            'nombreInstitucion'
+        );
+         return $this->render('firmarxml',[
+            'busca_instituciones' => $busca_instituciones,
+        ]);
+
+    }
+
+    public function actionDescargaxml()
+    {
+        if (Yii::$app->request->isPost) {
+            $data = Yii::$app->request->post();
+            $alumnos = trim($data['alumnos'],",");
+            $arr_alumnos = explode(",", $alumnos);
+            foreach ($arr_alumnos as $key => $curp) {
+                $profesionista = Profesionista::findOne(['curp' => $curp]);
+                if(is_null($profesionista)){
+                    \Yii::$app->session->setFlash('error', 'No existe el profesionista');
+                    $this->redirect(['titulos/firmarxml']);
+                }
+                $titulo_electronico = TituloElectronico::findOne(['curpProfesionista' => $curp]);
+                if(is_null($titulo_electronico)){
+                    \Yii::$app->session->setFlash('error', 'No existe Información de título electrónico');
+                    $this->redirect(['titulos/firmarxml']);
+                }
+                $carrera = Carrera::findOne(['cveCarrera' => $profesionista->cveCarrera]);
+                if(is_null($carrera)){
+                    \Yii::$app->session->setFlash('error', 'No existe la carrera del profesionista');
+                    $this->redirect(['titulos/firmarxml']);
+                }
+                $institucion = Institucion::findOne(['cveInstitucion' => $carrera->cveInstitucion]);
+                if(is_null($institucion)){
+                    \Yii::$app->session->setFlash('error', 'No existe las institución del profesionista');
+                    $this->redirect(['titulos/firmarxml']);
+                }
+                $responsables = Responsables::findAll(['cveInstitucion' => $institucion->cveInstitucion]);
+                if(empty($responsables)){
+                    \Yii::$app->session->setFlash('error', 'No existen responsables para la institución');
+                    $this->redirect(['titulos/firmarxml']);
+                }
+                $expedicion = Expedicion::findOne(['curpProfesionista' => $curp]);
+                if(is_null($expedicion)){
+                    \Yii::$app->session->setFlash('error', 'No existe el expedicion para el profesionista');
+                    $this->redirect(['titulos/firmarxml']);
+                }
+                $antecedente = Antecedente::findOne(['curpProfesionista' => $curp]);
+                if(is_null($antecedente)){
+                    \Yii::$app->session->setFlash('error', 'No existe el antecedente para el profesionista');
+                    $this->redirect(['titulos/firmarxml']);
+                }
+
+                $xw = xmlwriter_open_memory();
+                xmlwriter_set_indent($xw, 1);
+                $res = xmlwriter_set_indent_string($xw, ' ');
+                xmlwriter_start_document($xw, '1.0', 'UTF-8');
+                // A first element
+                xmlwriter_start_element($xw, 'TituloElectronico');
+                xmlwriter_start_attribute($xw, 'xmlns');
+                    xmlwriter_text($xw,$titulo_electronico->xlmns);
+                xmlwriter_end_attribute($xw);
+                xmlwriter_start_attribute($xw, 'version');
+                    xmlwriter_text($xw,$titulo_electronico->version);
+                xmlwriter_end_attribute($xw);
+                xmlwriter_start_attribute($xw, 'folioControl');
+                    xmlwriter_text($xw,$titulo_electronico->folioControl);
+                xmlwriter_end_attribute($xw);
+                    // Start a child element
+                    xmlwriter_start_element($xw, 'FirmaResponsables'); //INICA RESPONSABLES
+                    foreach ($responsables as $r => $responsable) {
+                        xmlwriter_start_element($xw, 'FirmaResponsable');
+                            xmlwriter_start_attribute($xw, 'nombre');
+                                xmlwriter_text($xw,$responsable->nombre);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'primerApellido');
+                                xmlwriter_text($xw,$responsable->primerApellido);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'segundoApellido');
+                                xmlwriter_text($xw,$responsable->segundoApellido);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'curp');
+                                xmlwriter_text($xw,$responsable->curp);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'idCargo');
+                                xmlwriter_text($xw,$responsable->idCargo);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'cargo');
+                                xmlwriter_text($xw,$responsable->cargo);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'abrTitulo');
+                                xmlwriter_text($xw,$responsable->abrTitulo);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'sello');
+                                xmlwriter_text($xw,$responsable->sello);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'certificadoResponsable');
+                                xmlwriter_text($xw,$responsable->certificadoResponsable);
+                            xmlwriter_end_attribute($xw);
+                            xmlwriter_start_attribute($xw, 'noCertificadoResponsable');
+                                xmlwriter_text($xw,$responsable->noCertificadoResponsable);
+                            xmlwriter_end_attribute($xw);
+                        xmlwriter_end_element($xw);
+                    }
+                    xmlwriter_end_element($xw); // TERMINA FIRMARESPONSABLES
+
+                    xmlwriter_start_element($xw, 'Institucion'); //INICIA INSTITUCION
+                        xmlwriter_start_attribute($xw, 'cveInstitucion');
+                            xmlwriter_text($xw,$institucion->cveInstitucion);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'nombreInstitucion');
+                            xmlwriter_text($xw,$institucion->nombreInstitucion);
+                        xmlwriter_end_attribute($xw);
+                    xmlwriter_end_element($xw);//TERMINA INSTITUCION
+
+                    xmlwriter_start_element($xw, 'Carrera'); //INICIA CARRERA
+                        xmlwriter_start_attribute($xw, 'cveCarrera');
+                            xmlwriter_text($xw,$carrera->cveCarrera);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'nombreCarrera');
+                            xmlwriter_text($xw,$carrera->nombreCarrera);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'fechaInicio');
+                            xmlwriter_text($xw,$carrera->fechaInicio);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'fechaTerminacion');
+                            xmlwriter_text($xw,$carrera->fechaTerminacion);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'idAutorizacionReconocimiento');
+                            xmlwriter_text($xw,$carrera->idAutorizacionReconocimiento);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'autorizacionReconocimiento');
+                            xmlwriter_text($xw,$carrera->autorizacionReconocimiento);
+                        xmlwriter_end_attribute($xw);
+                    xmlwriter_end_element($xw);//TERMINA CARRERA   
+
+                    xmlwriter_start_element($xw, 'Profesionista'); //INICIA Profesionista
+                        xmlwriter_start_attribute($xw, 'curp');
+                            xmlwriter_text($xw,$profesionista->curp);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'nombre');
+                            xmlwriter_text($xw,$profesionista->nombre);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'primerApellido');
+                            xmlwriter_text($xw,$profesionista->primerApellido);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'segundoApellido');
+                            xmlwriter_text($xw,$profesionista->segundoApellido);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'correoElectronico');
+                            xmlwriter_text($xw,$profesionista->correoElectronico);
+                        xmlwriter_end_attribute($xw);
+                    xmlwriter_end_element($xw);//TERMINA Profesionista   
+
+                    xmlwriter_start_element($xw, 'Expedicion'); //INICIA Expedicion
+                        xmlwriter_start_attribute($xw, 'fechaExpedicion');
+                            xmlwriter_text($xw,$expedicion->fechaExpedicion);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'idModalidadTitulacion');
+                            xmlwriter_text($xw,$expedicion->idModalidadTitulacion);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'modalidadTitulacion');
+                            xmlwriter_text($xw,$expedicion->modalidadTitulacion);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'fechaExamenProfesional');
+                            xmlwriter_text($xw,$expedicion->fechaExamenProfesional);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'cumplioServicioSocial');
+                            xmlwriter_text($xw,$expedicion->cumplioServicioSocial);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'idFundamentoLegalServicioSocial');
+                            xmlwriter_text($xw,$expedicion->idFundamentoLegalServicioSocial);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'fundamentoLegalServicioSocial');
+                            xmlwriter_text($xw,$expedicion->fundamentoLegalServicioSocial);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'idEntidadFederativa');
+                            xmlwriter_text($xw,$expedicion->idEntidadFederativa);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'entidadFederativa');
+                            xmlwriter_text($xw,$expedicion->entidadFederativa);
+                        xmlwriter_end_attribute($xw);
+                    xmlwriter_end_element($xw);//TERMINA Expedicion   
+
+                    xmlwriter_start_element($xw, 'Antecedente'); //INICIA Antecedente
+                        xmlwriter_start_attribute($xw, 'institucionProcedencia');
+                            xmlwriter_text($xw,$antecedente->institucionProcedencia);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'idTipoEstudioAntecedente');
+                            xmlwriter_text($xw,$antecedente->idTipoEstudioAntecedente);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'tipoEstudioAntecedente');
+                            xmlwriter_text($xw,$antecedente->tipoEstudioAntecedente);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'idEntidadFederativa');
+                            xmlwriter_text($xw,$antecedente->idEntidadFederativa);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'entidadFederativa');
+                            xmlwriter_text($xw,$antecedente->entidadFederativa);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'fechaInicio');
+                            xmlwriter_text($xw,$antecedente->fechaInicio);
+                        xmlwriter_end_attribute($xw);
+                        xmlwriter_start_attribute($xw, 'fechaTerminacion');
+                            xmlwriter_text($xw,$antecedente->fechaTerminacion);
+                        xmlwriter_end_attribute($xw);
+                    xmlwriter_end_element($xw);//TERMINA Antecedente   
+
+                xmlwriter_end_element($xw); // TERMINA TITULO
+                xmlwriter_end_document($xw);
+                //xmlwriter_text($xw, 'This is a sample text, ä');
+
+                file_put_contents("xml/".$curp.'.xml',xmlwriter_output_memory($xw));
+                return Yii::$app->response->sendFile("xml/".$curp.'.xml');
+            }
+        }
+    }
+
+    public function actionBuscacarreras($id)
+    {
+        $carreras = Carrera::find()
+            ->where(['cveInstitucion' => $id])
+            ->asArray()
+            ->all();   
+        if(!empty($carreras) ){
+            echo "<option value=''>Selecciona Carrera ...</option>";
+            foreach($carreras as $model){
+                echo "<option value='".$model['cveCarrera']."'>".$model['nombreCarrera']."</option>";
+            }
+        }
+        else{
+            echo "<option value=''> Selecciona Carrera ...</option>";
+        }
+    }
+
+    public function actionBuscaprofesionistas($id)
+    {
+        $profesionista = Profesionista::find()
+            ->where(['cveCarrera' => $id])
+            ->asArray()
+            ->all();   
+        if(!empty($profesionista) ){
+            echo "<option value=''>Selecciona Profesionista ...</option>";
+            foreach($profesionista as $model){
+                echo "<option value='".$model['curp']."-".$model['nombre']."'>".$model['nombre']."</option>";
+            }
+        }
+        else{
+            echo "<option value=''> Selecciona Profesionista ...</option>";
+        }
+    }
+
     /**
      * Revisa archivo antes de cargarlo.
      * @return mixed
@@ -681,6 +938,24 @@ class TitulosController extends Controller
                                 'responsables', 
                                 $col_responsable1, 
                                 $data_responsables
+                            )->execute();
+                        }
+
+                        foreach ($references_titulo_electronico as $newModel) {
+                            if(!$newModel->validate()){
+                                $error .= "<br>Errores en Título electrónico: <br>";
+                                foreach ($newModel->getFirstErrors() as $key => $value) {
+                                    $error .= "<li>".$value.'</li>';
+                                }
+                                $bandera_error = true;
+                            }
+                        }
+
+                        if(!$bandera_error){
+                            Yii::$app->db->createCommand()->batchInsert(
+                                'titulo_electronico', 
+                                $col_titulo_electronico, 
+                                $data_titulo_electronico
                             )->execute();
                         }
                         
