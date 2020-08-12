@@ -152,12 +152,12 @@ class TitulosController extends Controller
                             $cer_base64 = base64_encode($cer_file);
                             $respuesta = UtilidadesHelper::generarFirma($tmp_file1_key,$nombre_key,$formulario->password1,$cadena_original);
                             if($respuesta['code'] != 200 | !isset($respuesta['response']->data)){
-                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
                             $data = $respuesta['response']->data;
                             if(!isset($data['firma'])){
-                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
 
@@ -205,12 +205,12 @@ class TitulosController extends Controller
                             $cer_base64 = base64_encode($cer_file);
                             $respuesta = UtilidadesHelper::generarFirma($tmp_file2_key,$nombre_key,$formulario->password2,$cadena_original);
                             if($respuesta['code'] != 200 | !isset($respuesta['response']->data)){
-                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
                             $data = $respuesta['response']->data;
                             if(!isset($data['firma'])){
-                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
 

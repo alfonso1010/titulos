@@ -15,44 +15,24 @@
         </div>
 
         <!-- /.search form -->
+        <?php 
+            $items = [];
+            $rol = \Yii::$app->authManager->getRolesByUser(\Yii::$app->user->getId());
+            $rol = reset($rol);
+            array_push($items, ['label' => 'Menu', 'options' => ['class' => 'header']]);
+            if ($rol->name == "admin"){
+                array_push($items,  ['label' => 'Generación de Títulos XML', 'icon' => 'file-code-o', 'url' => ['titulos/generarxml']]);
+                array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);
+            }else{
+                array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);
+            }
+            array_push($items, ['label' => 'Login', 'url' => ['site/login'], 'visible' => Yii::$app->user->isGuest]);
 
+        ?>
         <?= dmstr\widgets\Menu::widget(
             [
                 'options' => ['class' => 'sidebar-menu tree', 'data-widget'=> 'tree'],
-                'items' => [
-                    ['label' => 'Menu', 'options' => ['class' => 'header']],
-                    //['label' => 'Gii', 'icon' => 'file-code-o', 'url' => ['/gii']],
-                    //['label' => 'Debug', 'icon' => 'dashboard', 'url' => ['/debug']],
-                    ['label' => 'Generación de Títulos XML', 'icon' => 'file-code-o', 'url' => ['titulos/generarxml']],
-                     ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']],
-                    ['label' => 'Login', 'url' => ['site/login'], 'visible' => Yii::$app->user->isGuest],
-                    /*[
-                        'label' => 'Some tools',
-                        'icon' => 'share',
-                        'url' => '#',
-                        'items' => [
-                            ['label' => 'Gii', 'icon' => 'file-code-o', 'url' => ['/gii'],],
-                            ['label' => 'Debug', 'icon' => 'dashboard', 'url' => ['/debug'],],
-                            [
-                                'label' => 'Level One',
-                                'icon' => 'circle-o',
-                                'url' => '#',
-                                'items' => [
-                                    ['label' => 'Level Two', 'icon' => 'circle-o', 'url' => '#',],
-                                    [
-                                        'label' => 'Level Two',
-                                        'icon' => 'circle-o',
-                                        'url' => '#',
-                                        'items' => [
-                                            ['label' => 'Level Three', 'icon' => 'circle-o', 'url' => '#',],
-                                            ['label' => 'Level Three', 'icon' => 'circle-o', 'url' => '#',],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],*/
-                ],
+                'items' => $items
             ]
         ) ?>
 
