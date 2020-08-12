@@ -3,6 +3,7 @@
 namespace common\helpers;
 
 use Yii;
+use yii\httpclient\Client;
 
 class UtilidadesHelper {
 
@@ -28,6 +29,29 @@ class UtilidadesHelper {
                     return true;
                 }
             }
+        ];
+    }
+
+    public static function generarFirma($key_temp,$nombre_key,$password,$cadena_original){
+        $client = new Client();
+        $response = $client->createRequest()
+        ->setMethod("POST")
+        ->addHeaders([
+            'content-type' => 'multipart/form-data'
+        ])
+        ->setUrl("http://localhost:8080/generarFirma")
+        ->setData([
+            'password' => $password,
+            'cadena_original' => $cadena_original
+        ])
+        ->addFile('files',$key_temp,['fileName' => $nombre_key])
+        ->send();
+        
+        $httpCode = (int)$response->headers['http-code'];
+       
+        return [
+            'response' => $response,
+            'code'     => $httpCode
         ];
     }
 }

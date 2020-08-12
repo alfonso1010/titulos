@@ -140,23 +140,105 @@ $this->registerJs('
             </div>
         </div>
         <br><br><br><br>
+        <?php
+            $form = ActiveForm::begin([
+                'id'       => 'active-form',
+                'action'   => Url::to(['titulos/descargaxml']),
+                'options'  => [
+                    'class'   => 'form-horizontal',
+                    'enctype' => 'multipart/form-data',
+                    'autocomplete' => 'off'
+                ],
+            ]);
+        ?>
+        <?=$form->field($formulario, 'alumnos')->hiddenInput(['id' => "alumnos"])->label(false);?>
         <div class="row" style="margin-left:15px; ">
             <div class="col-xs-12">
-            	<?php
-            	$form = ActiveForm::begin([
-					'id'       => 'active-form',
-					'action'   => Url::to(['titulos/descargaxml']),
-					'options'  => [
-						'class'   => 'form-horizontal',
-						'enctype' => 'multipart/form-data'
-					],
-				]);
-            	?>
-            	<input type="hidden" name="alumnos" id="alumnos"  />
-            	<center><?=Html::submitButton("Generar XML", ['class' => 'btn btn-success','style' => "font-size:20px"])?></center>
-            	<?php ActiveForm::end();?>
+            	<div class="col-sm-12">
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                        <label class="control-label font-grey-silver portlet_label "> Firmante 1 .Cer: </label>
+                        <?php
+                            echo $form->field($formulario,'archivo_cer1')->widget(FileInput::classname(),[
+                                'pluginOptions' => [
+                                    'allowedFileExtensions' => ['cer'],
+                                    'showPreview' => false,
+                                    'showCaption' => true,
+                                    'showRemove' => true,
+                                    'showUpload' => false,
+                                ]
+                            ])->label(false);
+                        ?>   
+                    </div>
+                    <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"></div>
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                        <label class="control-label font-grey-silver portlet_label "> Firmante 1 .Key: </label>
+                        <?php
+                            echo $form->field($formulario,'archivo_key1')->widget(FileInput::classname(),[
+                                'pluginOptions' => [
+                                    'allowedFileExtensions' => ['key'],
+                                    'showPreview' => false,
+                                    'showCaption' => true,
+                                    'showRemove' => true,
+                                    'showUpload' => false,
+                                ]
+                            ])->label(false);
+                        ?>   
+                    </div>
+                    <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"></div>
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                        <label class="control-label font-grey-silver portlet_label "> Password Firmante 1  </label>
+                        <?php
+                            echo $form->field($formulario,'password1')->passwordInput()->label(false);
+                        ?>   
+                    </div>
+                </div>
             </div>
         </div>
+         <div class="row" style="margin-left:15px; ">
+            <div class="col-xs-12">
+                <div class="col-sm-12">
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                        <label class="control-label font-grey-silver portlet_label "> Firmante 2 .Cer: </label>
+                        <?php
+                            echo $form->field($formulario,'archivo_cer2')->widget(FileInput::classname(),[
+                                'pluginOptions' => [
+                                    'allowedFileExtensions' => ['cer'],
+                                    'showPreview' => false,
+                                    'showCaption' => true,
+                                    'showRemove' => true,
+                                    'showUpload' => false,
+                                ]
+                            ])->label(false);
+                        ?>   
+                    </div>
+                    <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"></div>
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                        <label class="control-label font-grey-silver portlet_label "> Firmante 2 .Key: </label>
+                        <?php
+                            echo $form->field($formulario,'archivo_key2')->widget(FileInput::classname(),[
+                                'pluginOptions' => [
+                                    'allowedFileExtensions' => ['key'],
+                                    'showPreview' => false,
+                                    'showCaption' => true,
+                                    'showRemove' => true,
+                                    'showUpload' => false,
+                                ]
+                            ])->label(false);
+                        ?>   
+                    </div>
+                    <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"></div>
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                        <label class="control-label font-grey-silver portlet_label "> Password Firmante 2  </label>
+                        <?php
+                            echo $form->field($formulario,'password2')->passwordInput()->label(false);
+                        ?>   
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <center><?=Html::submitButton("Generar XML", ['class' => 'btn btn-success','style' => "font-size:20px"])?></center>
+        <?php ActiveForm::end();?>
     </div>
 </div>
 <style type="text/css">

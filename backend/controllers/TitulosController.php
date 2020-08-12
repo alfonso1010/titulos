@@ -8,6 +8,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\VarDumper;
 use common\models\formularios\GenerarXmlForm;
+use common\models\formularios\FirmaTituloForm;
 use yii\web\UploadedFile;
 use PHPExcel_Reader_Exception;
 use PHPExcel_Worksheet as Worksheet;
@@ -24,6 +25,7 @@ use common\models\Carrera;
 use common\models\Profesionista;
 use common\models\Expedicion;
 use common\models\Antecedente;
+use common\helpers\UtilidadesHelper;
 
 /**
  * BuzonController implements the CRUD actions for Buzon model.
@@ -56,54 +58,69 @@ class TitulosController extends Controller
             'cveInstitucion',
             'nombreInstitucion'
         );
+        $formulario = new FirmaTituloForm();
          return $this->render('firmarxml',[
             'busca_instituciones' => $busca_instituciones,
+            'formulario' => $formulario
         ]);
 
     }
 
     public function actionDescargaxml()
     {
+        $formulario = new FirmaTituloForm();
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post();
-            $alumnos = trim($data['alumnos'],",");
+            $formulario->load($data);
+            $alumnos = trim($formulario->alumnos,",");
             $arr_alumnos = explode(",", $alumnos);
+            $nombre_zip = "";
+            if(count($arr_alumnos) > 1){
+                $zip = new \ZipArchive;
+                $nombre_zip = 'xml/'.date("H:i:s").'_titulos.zip';
+                if (!$zip->open($nombre_zip, \ZipArchive::CREATE) === TRUE){
+                    \Yii::$app->session->setFlash('error', 'Error al crear zip');
+                    return $this->redirect(['titulos/firmarxml']);
+                }
+            }
             foreach ($arr_alumnos as $key => $curp) {
                 $profesionista = Profesionista::findOne(['curp' => $curp]);
                 if(is_null($profesionista)){
                     \Yii::$app->session->setFlash('error', 'No existe el profesionista');
-                    $this->redirect(['titulos/firmarxml']);
+                    return $this->redirect(['titulos/firmarxml']);
                 }
                 $titulo_electronico = TituloElectronico::findOne(['curpProfesionista' => $curp]);
                 if(is_null($titulo_electronico)){
                     \Yii::$app->session->setFlash('error', 'No existe Información de título electrónico');
-                    $this->redirect(['titulos/firmarxml']);
+                    return $this->redirect(['titulos/firmarxml']);
                 }
                 $carrera = Carrera::findOne(['cveCarrera' => $profesionista->cveCarrera]);
                 if(is_null($carrera)){
                     \Yii::$app->session->setFlash('error', 'No existe la carrera del profesionista');
-                    $this->redirect(['titulos/firmarxml']);
+                    return $this->redirect(['titulos/firmarxml']);
                 }
                 $institucion = Institucion::findOne(['cveInstitucion' => $carrera->cveInstitucion]);
                 if(is_null($institucion)){
                     \Yii::$app->session->setFlash('error', 'No existe las institución del profesionista');
-                    $this->redirect(['titulos/firmarxml']);
+                    return $this->redirect(['titulos/firmarxml']);
                 }
                 $responsables = Responsables::findAll(['cveInstitucion' => $institucion->cveInstitucion]);
                 if(empty($responsables)){
                     \Yii::$app->session->setFlash('error', 'No existen responsables para la institución');
-                    $this->redirect(['titulos/firmarxml']);
+                    return $this->redirect(['titulos/firmarxml']);
                 }
                 $expedicion = Expedicion::findOne(['curpProfesionista' => $curp]);
                 if(is_null($expedicion)){
                     \Yii::$app->session->setFlash('error', 'No existe el expedicion para el profesionista');
-                    $this->redirect(['titulos/firmarxml']);
+                    return $this->redirect(['titulos/firmarxml']);
                 }
                 $antecedente = Antecedente::findOne(['curpProfesionista' => $curp]);
                 if(is_null($antecedente)){
                     \Yii::$app->session->setFlash('error', 'No existe el antecedente para el profesionista');
-                    $this->redirect(['titulos/firmarxml']);
+                    return $this->redirect(['titulos/firmarxml']);
                 }
+
+
 
                 $xw = xmlwriter_open_memory();
                 xmlwriter_set_indent($xw, 1);
@@ -123,38 +140,113 @@ class TitulosController extends Controller
                     // Start a child element
                     xmlwriter_start_element($xw, 'FirmaResponsables'); //INICA RESPONSABLES
                     foreach ($responsables as $r => $responsable) {
-                        xmlwriter_start_element($xw, 'FirmaResponsable');
-                            xmlwriter_start_attribute($xw, 'nombre');
-                                xmlwriter_text($xw,$responsable->nombre);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'primerApellido');
-                                xmlwriter_text($xw,$responsable->primerApellido);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'segundoApellido');
-                                xmlwriter_text($xw,$responsable->segundoApellido);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'curp');
-                                xmlwriter_text($xw,$responsable->curp);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'idCargo');
-                                xmlwriter_text($xw,$responsable->idCargo);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'cargo');
-                                xmlwriter_text($xw,$responsable->cargo);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'abrTitulo');
-                                xmlwriter_text($xw,$responsable->abrTitulo);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'sello');
-                                xmlwriter_text($xw,$responsable->sello);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'certificadoResponsable');
-                                xmlwriter_text($xw,$responsable->certificadoResponsable);
-                            xmlwriter_end_attribute($xw);
-                            xmlwriter_start_attribute($xw, 'noCertificadoResponsable');
-                                xmlwriter_text($xw,$responsable->noCertificadoResponsable);
-                            xmlwriter_end_attribute($xw);
-                        xmlwriter_end_element($xw);
+                        if($r == 0){
+                            $cadena_original = "||1.0|$titulo_electronico->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
+
+                            $formulario->archivo_cer1 = UploadedFile::getInstance($formulario, 'archivo_cer1');
+                            $formulario->archivo_key1 = UploadedFile::getInstance($formulario, 'archivo_key1');
+                            $tmp_file1_cer = $formulario->archivo_cer1->tempName;
+                            $tmp_file1_key = $formulario->archivo_key1->tempName;
+                            $nombre_key = $formulario->archivo_key1->name;
+                            $cer_file = file_get_contents($tmp_file1_cer);
+                            $cer_base64 = base64_encode($cer_file);
+                            $respuesta = UtilidadesHelper::generarFirma($tmp_file1_key,$nombre_key,$formulario->password1,$cadena_original);
+                            if($respuesta['code'] != 200 | !isset($respuesta['response']->data)){
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                return $this->redirect(['titulos/firmarxml']);
+                            }
+                            $data = $respuesta['response']->data;
+                            if(!isset($data['firma'])){
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                return $this->redirect(['titulos/firmarxml']);
+                            }
+
+                            xmlwriter_start_element($xw, 'FirmaResponsable');
+                                xmlwriter_start_attribute($xw, 'nombre');
+                                    xmlwriter_text($xw,$responsable->nombre);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'primerApellido');
+                                    xmlwriter_text($xw,$responsable->primerApellido);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'segundoApellido');
+                                    xmlwriter_text($xw,$responsable->segundoApellido);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'curp');
+                                    xmlwriter_text($xw,$responsable->curp);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'idCargo');
+                                    xmlwriter_text($xw,$responsable->idCargo);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'cargo');
+                                    xmlwriter_text($xw,$responsable->cargo);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'abrTitulo');
+                                    xmlwriter_text($xw,$responsable->abrTitulo);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'sello');
+                                    xmlwriter_text($xw,$data['firma']);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'certificadoResponsable');
+                                    xmlwriter_text($xw,$cer_base64);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'noCertificadoResponsable');
+                                    xmlwriter_text($xw,$responsable->noCertificadoResponsable);
+                                xmlwriter_end_attribute($xw);
+                            xmlwriter_end_element($xw);
+
+                        }else if($r == 1){
+                            $cadena_original = "||1.0|$titulo_electronico->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
+                            $formulario->archivo_cer2 = UploadedFile::getInstance($formulario, 'archivo_cer2');
+                            $formulario->archivo_key2 = UploadedFile::getInstance($formulario, 'archivo_key2');
+                            $tmp_file2_cer = $formulario->archivo_cer2->tempName;
+                            $tmp_file2_key = $formulario->archivo_key2->tempName;
+                            $nombre_key = $formulario->archivo_key2->name;
+                            $cer_file = file_get_contents($tmp_file2_cer);
+                            $cer_base64 = base64_encode($cer_file);
+                            $respuesta = UtilidadesHelper::generarFirma($tmp_file2_key,$nombre_key,$formulario->password2,$cadena_original);
+                            if($respuesta['code'] != 200 | !isset($respuesta['response']->data)){
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                return $this->redirect(['titulos/firmarxml']);
+                            }
+                            $data = $respuesta['response']->data;
+                            if(!isset($data['firma'])){
+                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, contacte con el administrador');
+                                return $this->redirect(['titulos/firmarxml']);
+                            }
+
+                            xmlwriter_start_element($xw, 'FirmaResponsable');
+                                xmlwriter_start_attribute($xw, 'nombre');
+                                    xmlwriter_text($xw,$responsable->nombre);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'primerApellido');
+                                    xmlwriter_text($xw,$responsable->primerApellido);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'segundoApellido');
+                                    xmlwriter_text($xw,$responsable->segundoApellido);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'curp');
+                                    xmlwriter_text($xw,$responsable->curp);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'idCargo');
+                                    xmlwriter_text($xw,$responsable->idCargo);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'cargo');
+                                    xmlwriter_text($xw,$responsable->cargo);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'abrTitulo');
+                                    xmlwriter_text($xw,$responsable->abrTitulo);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'sello');
+                                    xmlwriter_text($xw,$data['firma']);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'certificadoResponsable');
+                                    xmlwriter_text($xw,$cer_base64);
+                                xmlwriter_end_attribute($xw);
+                                xmlwriter_start_attribute($xw, 'noCertificadoResponsable');
+                                    xmlwriter_text($xw,$responsable->noCertificadoResponsable);
+                                xmlwriter_end_attribute($xw);
+                            xmlwriter_end_element($xw);
+                        }
                     }
                     xmlwriter_end_element($xw); // TERMINA FIRMARESPONSABLES
 
@@ -175,10 +267,10 @@ class TitulosController extends Controller
                             xmlwriter_text($xw,$carrera->nombreCarrera);
                         xmlwriter_end_attribute($xw);
                         xmlwriter_start_attribute($xw, 'fechaInicio');
-                            xmlwriter_text($xw,$carrera->fechaInicio);
+                            xmlwriter_text($xw,$profesionista->fechaInicio);
                         xmlwriter_end_attribute($xw);
                         xmlwriter_start_attribute($xw, 'fechaTerminacion');
-                            xmlwriter_text($xw,$carrera->fechaTerminacion);
+                            xmlwriter_text($xw,$profesionista->fechaTerminacion);
                         xmlwriter_end_attribute($xw);
                         xmlwriter_start_attribute($xw, 'idAutorizacionReconocimiento');
                             xmlwriter_text($xw,$carrera->idAutorizacionReconocimiento);
@@ -265,8 +357,14 @@ class TitulosController extends Controller
                 //xmlwriter_text($xw, 'This is a sample text, ä');
 
                 file_put_contents("xml/".$curp.'.xml',xmlwriter_output_memory($xw));
-                return Yii::$app->response->sendFile("xml/".$curp.'.xml');
+                if(count($arr_alumnos) == 1){
+                    return Yii::$app->response->sendFile("xml/".$curp.'.xml');
+                }else{
+                    $zip->addFile("xml/".$curp.'.xml');
+                }
             }
+            $zip->close();
+            return Yii::$app->response->sendFile($nombre_zip);
         }
     }
 
@@ -296,7 +394,7 @@ class TitulosController extends Controller
         if(!empty($profesionista) ){
             echo "<option value=''>Selecciona Profesionista ...</option>";
             foreach($profesionista as $model){
-                echo "<option value='".$model['curp']."-".$model['nombre']."'>".$model['nombre']."</option>";
+                echo "<option value='".$model['curp']."-".$model['nombre']." ".$model['primerApellido']." ".$model['segundoApellido']."'>".$model['nombre']." ".$model['primerApellido']." ".$model['segundoApellido']."</option>";
             }
         }
         else{
@@ -362,7 +460,7 @@ class TitulosController extends Controller
                                 //carrera
                                     $cveCarrera = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreCarrera = trim(ArrayHelper::getValue($value, [1], ''));
-                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [7], ''));
+                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [5], ''));
                                     $array_carreras[] = [
                                         'cveInstitucion' => $cveInstitucion, 
                                         'cveCarrera' => $cveCarrera,
@@ -407,18 +505,15 @@ class TitulosController extends Controller
                     $col_carrera = [
                         'cveCarrera',
                         'nombreCarrera',
-                        'fechaInicio',
-                        'fechaTerminacion',
                         'idAutorizacionReconocimiento',
                         'autorizacionReconocimiento',
                         'numeroRvoe',
                         'cveInstitucion'
                     ];
                     $col_titulo_electronico = [
-                        'xlmns',
-                        'version',
                         'cveInstitucion',
-                        'folioControl'
+                        'folioControl',
+                        'curpProfesionista'
                     ];
                     $col_profesionista = [
                         'curp',
@@ -428,7 +523,9 @@ class TitulosController extends Controller
                         'correoElectronico',
                         'cveCarrera',
                         'folioControl',
-                        'idExpedicion'
+                        'idExpedicion',
+                        'fechaInicio',
+                        'fechaTerminacion'
                     ];
                     $col_expedicion = [
                         'idExpedicion',
@@ -519,22 +616,19 @@ class TitulosController extends Controller
                             if ($row > 1 && $value[0] != ""  ) {
                                 if($hoja == 1){
                                 //titulo electronico
-                                    $xlmns = trim(ArrayHelper::getValue($value, [0], ''));
-                                    $version = trim(ArrayHelper::getValue($value, [1], ''));
-                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [2], ''));
-                                    $folioControl = trim(ArrayHelper::getValue($value, [3], ''));
+                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [0], ''));
+                                    $folioControl = trim(ArrayHelper::getValue($value, [1], ''));
+                                    $curpProfesionista = trim(ArrayHelper::getValue($value, [2], ''));
                                     $data_titulo_electronico[] = [
-                                        'xlmns' => $xlmns,
-                                        'version' => $version,
                                         'cveInstitucion' => $cveInstitucion,
-                                        'folioControl' => $folioControl
+                                        'folioControl' => $folioControl,
+                                        'curpProfesionista' => $curpProfesionista
                                     ];
 
                                     $rows_titulo_electronico['TituloElectronico'] = [
-                                        'xlmns' => $xlmns,
-                                        'version' => $version,
                                         'cveInstitucion' => $cveInstitucion,
-                                        'folioControl' => $folioControl
+                                        'folioControl' => $folioControl,
+                                        'curpProfesionista' => $curpProfesionista
                                     ];
                                     $newModel = new TituloElectronico();
                                     $newModel->load($rows_titulo_electronico);
@@ -650,20 +744,13 @@ class TitulosController extends Controller
                                 //carrera
                                     $cveCarrera = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreCarrera = trim(ArrayHelper::getValue($value, [1], ''));
-                                    $fechaInicio = ArrayHelper::getValue($value, [2], '');
-                                    $fechaTerminacion = ArrayHelper::getValue($value, [3], '');
-                                    $idAutorizacionReconocimiento = trim(ArrayHelper::getValue($value, [4], ''));
-                                    $autorizacionReconocimiento = trim(ArrayHelper::getValue($value, [5], ''));
-                                    $numeroRvoe = trim(ArrayHelper::getValue($value, [6], ''));
-                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [7], ''));
-                                    $fechaInicio = (is_object($fechaInicio))?$fechaInicio->format('Y-m-d'):trim($fechaInicio);
-                                    $fechaTerminacion = (is_object($fechaTerminacion))?$fechaTerminacion->format('Y-m-d'):trim($fechaTerminacion);
-
+                                    $idAutorizacionReconocimiento = trim(ArrayHelper::getValue($value, [2], ''));
+                                    $autorizacionReconocimiento = trim(ArrayHelper::getValue($value, [3], ''));
+                                    $numeroRvoe = trim(ArrayHelper::getValue($value, [4], ''));
+                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [5], ''));
                                     $data_carrera[] = [
                                         'cveCarrera' => $cveCarrera,
                                         'nombreCarrera' => $nombreCarrera,
-                                        'fechaInicio' => $fechaInicio,
-                                        'fechaTerminacion' => $fechaTerminacion,
                                         'idAutorizacionReconocimiento' => $idAutorizacionReconocimiento,
                                         'autorizacionReconocimiento' => $autorizacionReconocimiento,
                                         'numeroRvoe' => $numeroRvoe,
@@ -673,8 +760,6 @@ class TitulosController extends Controller
                                     $rows_carrera['Carrera'] = [
                                         'cveCarrera' => $cveCarrera,
                                         'nombreCarrera' => $nombreCarrera,
-                                        'fechaInicio' => $fechaInicio,
-                                        'fechaTerminacion' => $fechaTerminacion,
                                         'idAutorizacionReconocimiento' => $idAutorizacionReconocimiento,
                                         'autorizacionReconocimiento' => $autorizacionReconocimiento,
                                         'numeroRvoe' => $numeroRvoe,
@@ -694,6 +779,12 @@ class TitulosController extends Controller
                                     $cveCarrera = trim(ArrayHelper::getValue($value, [5], ''));
                                     $folioControl = trim(ArrayHelper::getValue($value, [6], ''));
                                     $idExpedicion = trim(ArrayHelper::getValue($value, [7], ''));
+                                    $fechaInicio = ArrayHelper::getValue($value, [8], '');
+                                    $fechaTerminacion = ArrayHelper::getValue($value, [9], '');
+                                    $fechaInicio = (is_object($fechaInicio))?$fechaInicio->format('Y-m-d'):trim($fechaInicio);
+                                    $fechaTerminacion = (is_object($fechaTerminacion))?$fechaTerminacion->format('Y-m-d'):trim($fechaTerminacion);
+                                    $fechaInicio = (strlen($fechaInicio) > 1)?$fechaInicio:null;
+                                    
 
                                     $data_profesionista[] = [
                                         'curp' => $curp,
@@ -703,7 +794,9 @@ class TitulosController extends Controller
                                         'correoElectronico' => $correoElectronico,
                                         'cveCarrera' => $cveCarrera,
                                         'folioControl' => $folioControl,
-                                        'idExpedicion' => $idExpedicion
+                                        'idExpedicion' => $idExpedicion,
+                                        'fechaInicio' => $fechaInicio,
+                                        'fechaTerminacion' => $fechaTerminacion
                                     ];
 
                                     $rows_profesionista['Profesionista'] = [
@@ -714,7 +807,9 @@ class TitulosController extends Controller
                                         'correoElectronico' => $correoElectronico,
                                         'cveCarrera' => $cveCarrera,
                                         'folioControl' => $folioControl,
-                                        'idExpedicion' => $idExpedicion
+                                        'idExpedicion' => $idExpedicion,
+                                        'fechaInicio' => $fechaInicio,
+                                        'fechaTerminacion' => $fechaTerminacion
                                     ];
                                     $newModel = new Profesionista();
                                     $newModel->load($rows_profesionista);
@@ -737,6 +832,7 @@ class TitulosController extends Controller
                                     $fechaExpedicion = (is_object($fechaExpedicion))?$fechaExpedicion->format('Y-m-d'):trim($fechaExpedicion);
                                     $fechaExamenProfesional = (is_object($fechaExamenProfesional))?$fechaExamenProfesional->format('Y-m-d'):trim($fechaExamenProfesional);
                                     $fechaExencionExamenProfesional = (is_object($fechaExencionExamenProfesional))?$fechaExencionExamenProfesional->format('Y-m-d'):trim($fechaExencionExamenProfesional);
+                                    $fechaExencionExamenProfesional = (strlen($fechaExencionExamenProfesional) > 1)?$fechaExencionExamenProfesional:null;
 
                                     $data_expedicion[] = [
                                         'idExpedicion' => $idExpedicion,
@@ -785,6 +881,7 @@ class TitulosController extends Controller
                                     $fechaInicio = (is_object($fechaInicio))?$fechaInicio->format('Y-m-d'):trim($fechaInicio);
                                     $fechaTerminacion = (is_object($fechaTerminacion))?$fechaTerminacion->format('Y-m-d'):trim($fechaTerminacion);
                                     $curpProfesionista = trim(ArrayHelper::getValue($value, [9], ''));
+                                    $fechaInicio = (strlen($fechaInicio) > 1)?$fechaInicio:null;
 
 
                                     $data_antecedentes[] = [
@@ -958,7 +1055,6 @@ class TitulosController extends Controller
                                 $data_titulo_electronico
                             )->execute();
                         }
-                        
                         if(!$bandera_error){
                             $transaction->commit();
                             \Yii::$app->session->setFlash('success', "Información guardada con éxito.");
@@ -973,6 +1069,7 @@ class TitulosController extends Controller
                             if(!is_null($busca_importacion)){
                                 $busca_importacion->delete();
                             }
+                            return $this->redirect(['titulos/generarxml']);
                         }
                     } catch (\Exception $e) {
                         $transaction->rollBack();

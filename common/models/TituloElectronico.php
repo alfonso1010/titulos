@@ -33,7 +33,7 @@ class TituloElectronico extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['xlmns', 'version', 'folioControl', 'cveInstitucion', 'curpProfesionista'], 'required'],
+            [['folioControl', 'cveInstitucion', 'curpProfesionista'], 'required'],
             [['xlmns', 'version', 'folioControl'], 'string', 'max' => 100],
             [['cveInstitucion'], 'string', 'max' => 7],
             [['curpProfesionista'], 'string', 'max' => 18],

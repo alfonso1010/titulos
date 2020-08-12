@@ -35,7 +35,7 @@ class Carrera extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['cveCarrera', 'nombreCarrera', 'fechaTerminacion', 'idAutorizacionReconocimiento', 'autorizacionReconocimiento', 'cveInstitucion'], 'required'],
+            [['cveCarrera', 'nombreCarrera', 'idAutorizacionReconocimiento', 'autorizacionReconocimiento', 'cveInstitucion'], 'required'],
             [['fechaInicio', 'fechaTerminacion'], 'safe'],
             [['idAutorizacionReconocimiento'], 'integer'],
             [['cveCarrera', 'cveInstitucion'], 'string', 'max' => 7],
