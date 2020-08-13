@@ -23,6 +23,7 @@
             if ($rol->name == "admin"){
                 array_push($items,  ['label' => 'Generación de Títulos XML', 'icon' => 'file-code-o', 'url' => ['titulos/generarxml']]);
                 array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);
+                array_push($items,  ['label' => 'Limpiar BD', 'icon' => 'file-code-o', 'url' => ['titulos/vaciartablas']]);
             }else{
                 array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);
             }

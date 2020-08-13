@@ -33,12 +33,7 @@ class TituloElectronico extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['folioControl', 'cveInstitucion', 'curpProfesionista'], 'required'],
-            [['xlmns', 'version', 'folioControl'], 'string', 'max' => 100],
-            [['cveInstitucion'], 'string', 'max' => 7],
-            [['curpProfesionista'], 'string', 'max' => 18],
-            [['cveInstitucion'], 'exist', 'skipOnError' => true, 'targetClass' => Institucion::className(), 'targetAttribute' => ['cveInstitucion' => 'cveInstitucion']],
-            [['curpProfesionista'], 'exist', 'skipOnError' => true, 'targetClass' => Profesionista::className(), 'targetAttribute' => ['curpProfesionista' => 'curp']],
+            [['xmlns', 'version','xmlnsXsi','xsiShecmaLocation'], 'string', 'max' => 255],
         ];
     }
 
@@ -49,11 +44,10 @@ class TituloElectronico extends \yii\db\ActiveRecord
     {
         return [
             'idTituloElectronico' => 'Id Titulo Electronico',
-            'xlmns' => 'Xlmns',
+            'xmlns' => 'xmlns',
             'version' => 'Version',
-            'folioControl' => 'Folio Control',
-            'cveInstitucion' => 'Cve Institucion',
-            'curpProfesionista' => 'Curp Profesionista',
+            'xmlnsXsi' => 'xmlnsXsi',
+            'xsiShecmaLocation' => 'xsiShecmaLocation',
         ];
     }
 

@@ -19,31 +19,13 @@ class m200801_000700_create_table_titulo_electronico extends Migration
 
         $this->createTable('titulo_electronico', [
             'idTituloElectronico' => $this->integer(11)->unsigned()->notNull()->append('AUTO_INCREMENT PRIMARY KEY'),
-            'xlmns' => $this->string(100)->notNull(),
-            'version' => $this->string(100)->notNull(),
-            'folioControl' => $this->string(100)->notNull(),
-            'cveInstitucion' => $this->string(7)->unsigned()->notNull(),
-            'curpProfesionista' => $this->string(18)->unsigned()->notNull(),
+            'xmlns' => $this->string(100)->notNull()->defaultValue("https://www.siged.sep.gob.mx/titulos/"),
+            'version' => $this->string(100)->notNull()->defaultValue("1.0"),
+            'xmlnsXsi' => $this->string(250)->notNull()->defaultValue("http://www.w3.org/2001/XMLSchema-instance"),
+            'xsiShecmaLocation' => $this->string(250)->notNull()->defaultValue("https://www.siged.sep.gob.mx/titulos/schema.xsd"),
         ], $tableOptions);
 
-        // add foreign key for table `user`
-        $this->addForeignKey(
-            'fk-titulo_electronico_institucion',
-            'titulo_electronico',
-            'cveInstitucion',
-            'institucion', //tbl_foranea
-            'cveInstitucion', // pk tbl_foranea
-            'CASCADE'
-        );
-
-         $this->addForeignKey(
-            'fk-titulo_electronico_profesionista',
-            'titulo_electronico',
-            'curpProfesionista',
-            'profesionista', //tbl_foranea
-            'curp', // pk tbl_foranea
-            'CASCADE'
-        );
+       
     }
 
     /**

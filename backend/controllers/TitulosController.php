@@ -89,7 +89,7 @@ class TitulosController extends Controller
                     \Yii::$app->session->setFlash('error', 'No existe el profesionista');
                     return $this->redirect(['titulos/firmarxml']);
                 }
-                $titulo_electronico = TituloElectronico::findOne(['curpProfesionista' => $curp]);
+                $titulo_electronico = TituloElectronico::findOne(1);
                 if(is_null($titulo_electronico)){
                     \Yii::$app->session->setFlash('error', 'No existe Información de título electrónico');
                     return $this->redirect(['titulos/firmarxml']);
@@ -120,8 +120,6 @@ class TitulosController extends Controller
                     return $this->redirect(['titulos/firmarxml']);
                 }
 
-
-
                 $xw = xmlwriter_open_memory();
                 xmlwriter_set_indent($xw, 1);
                 $res = xmlwriter_set_indent_string($xw, ' ');
@@ -129,19 +127,25 @@ class TitulosController extends Controller
                 // A first element
                 xmlwriter_start_element($xw, 'TituloElectronico');
                 xmlwriter_start_attribute($xw, 'xmlns');
-                    xmlwriter_text($xw,$titulo_electronico->xlmns);
+                    xmlwriter_text($xw,$titulo_electronico->xmlns);
+                xmlwriter_end_attribute($xw);
+                xmlwriter_start_attribute($xw, 'xmlns:xsi');
+                    xmlwriter_text($xw,$titulo_electronico->xmlnsXsi);
                 xmlwriter_end_attribute($xw);
                 xmlwriter_start_attribute($xw, 'version');
                     xmlwriter_text($xw,$titulo_electronico->version);
                 xmlwriter_end_attribute($xw);
                 xmlwriter_start_attribute($xw, 'folioControl');
-                    xmlwriter_text($xw,$titulo_electronico->folioControl);
+                    xmlwriter_text($xw,$profesionista->folioControl);
+                xmlwriter_end_attribute($xw);
+                xmlwriter_start_attribute($xw, 'xsi:shecmaLocation');
+                    xmlwriter_text($xw,$titulo_electronico->xsiShecmaLocation);
                 xmlwriter_end_attribute($xw);
                     // Start a child element
                     xmlwriter_start_element($xw, 'FirmaResponsables'); //INICA RESPONSABLES
                     foreach ($responsables as $r => $responsable) {
                         if($r == 0){
-                            $cadena_original = "||1.0|$titulo_electronico->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
+                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
 
                             $formulario->archivo_cer1 = UploadedFile::getInstance($formulario, 'archivo_cer1');
                             $formulario->archivo_key1 = UploadedFile::getInstance($formulario, 'archivo_key1');
@@ -195,7 +199,7 @@ class TitulosController extends Controller
                             xmlwriter_end_element($xw);
 
                         }else if($r == 1){
-                            $cadena_original = "||1.0|$titulo_electronico->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
+                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
                             $formulario->archivo_cer2 = UploadedFile::getInstance($formulario, 'archivo_cer2');
                             $formulario->archivo_key2 = UploadedFile::getInstance($formulario, 'archivo_key2');
                             $tmp_file2_cer = $formulario->archivo_cer2->tempName;
@@ -443,34 +447,123 @@ class TitulosController extends Controller
                     $array_carreras = [];
                     $array_profesionistas = [];
 
+                    $rows_institucion = [];
+                    $data_institucion = [];
+                    $references_institucion = [];
+
+                    $rows_carrera = [];
+                    $data_carrera = [];
+                    $references_carrera = [];
+
+                    $rows_profesionista = [];
+                    $data_profesionista = [];
+                    $references_profesionista = [];
+
                     foreach ($reader->getSheetIterator() as $hoja => $sheet) {
                         foreach ($sheet->getRowIterator() as $row => $value) {
-                            if ($row > 1 && $value[0] != ""  ) {
-                                if($hoja == 2){
+                            if ($row > 1  ) {
+                                if($hoja == 1){
                                 //institucion
                                     $cveInstitucion = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreInstitucion = trim(ArrayHelper::getValue($value, [1], ''));
+                                    $data_institucion[] = [
+                                        'cveInstitucion' => $cveInstitucion,
+                                        'nombreInstitucion' => $nombreInstitucion
+                                    ];
+
+                                    $rows_institucion['Institucion'] = [
+                                        'cveInstitucion' => $cveInstitucion,
+                                        'nombreInstitucion' => $nombreInstitucion
+                                    ];
+                                    $newModel = new Institucion();
+                                    $newModel->load($rows_institucion);
+                                    $references_institucion[$row] = $newModel;
+
                                     $array_instituciones[] = [
                                         'cveInstitucion' => $cveInstitucion, 
                                         'nombreInstitucion' => $nombreInstitucion
                                     ];
                                     
 
-                                }else if($hoja == 5){
+                                }else if($hoja == 4  && $value[0] != ""){
                                 //carrera
                                     $cveCarrera = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreCarrera = trim(ArrayHelper::getValue($value, [1], ''));
+                                    $idAutorizacionReconocimiento = trim(ArrayHelper::getValue($value, [2], ''));
+                                    $autorizacionReconocimiento = trim(ArrayHelper::getValue($value, [3], ''));
+                                    $numeroRvoe = trim(ArrayHelper::getValue($value, [4], ''));
                                     $cveInstitucion = trim(ArrayHelper::getValue($value, [5], ''));
+                                    $data_carrera[] = [
+                                        'cveCarrera' => $cveCarrera,
+                                        'nombreCarrera' => $nombreCarrera,
+                                        'idAutorizacionReconocimiento' => $idAutorizacionReconocimiento,
+                                        'autorizacionReconocimiento' => $autorizacionReconocimiento,
+                                        'numeroRvoe' => $numeroRvoe,
+                                        'cveInstitucion' => $cveInstitucion
+                                    ];
+
+                                    $rows_carrera['Carrera'] = [
+                                        'cveCarrera' => $cveCarrera,
+                                        'nombreCarrera' => $nombreCarrera,
+                                        'idAutorizacionReconocimiento' => $idAutorizacionReconocimiento,
+                                        'autorizacionReconocimiento' => $autorizacionReconocimiento,
+                                        'numeroRvoe' => $numeroRvoe,
+                                        'cveInstitucion' => $cveInstitucion
+                                    ];
+                                    $newModel = new Carrera();
+                                    $newModel->load($rows_carrera);
+                                    $references_carrera[$row] = $newModel;
+
                                     $array_carreras[] = [
                                         'cveInstitucion' => $cveInstitucion, 
                                         'cveCarrera' => $cveCarrera,
                                         'nombreCarrera' => $nombreCarrera,
                                     ];
-                                }else if($hoja == 6){
+                                }else if($hoja == 5  && $value[0] != ""){
                                 //profesionista
                                     $curp = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombre = trim(ArrayHelper::getValue($value, [1], ''));
+                                    $primerApellido = trim(ArrayHelper::getValue($value, [2], ''));
+                                    $segundoApellido = trim(ArrayHelper::getValue($value, [3], ''));
+                                    $correoElectronico = trim(ArrayHelper::getValue($value, [4], ''));
                                     $cveCarrera = trim(ArrayHelper::getValue($value, [5], ''));
+                                    $folioControl = trim(ArrayHelper::getValue($value, [6], ''));
+                                    $idExpedicion = trim(ArrayHelper::getValue($value, [7], ''));
+                                    $fechaInicio = ArrayHelper::getValue($value, [8], '');
+                                    $fechaTerminacion = ArrayHelper::getValue($value, [9], '');
+                                    $fechaInicio = (is_object($fechaInicio))?$fechaInicio->format('Y-m-d'):trim($fechaInicio);
+                                    $fechaTerminacion = (is_object($fechaTerminacion))?$fechaTerminacion->format('Y-m-d'):trim($fechaTerminacion);
+                                    $fechaInicio = (strlen($fechaInicio) > 1)?$fechaInicio:null;
+                                    
+                                    $data_profesionista[] = [
+                                        'curp' => $curp,
+                                        'nombre' => $nombre,
+                                        'primerApellido' => $primerApellido,
+                                        'segundoApellido' => $segundoApellido,
+                                        'correoElectronico' => $correoElectronico,
+                                        'cveCarrera' => $cveCarrera,
+                                        'folioControl' => $folioControl,
+                                        'idExpedicion' => $idExpedicion,
+                                        'fechaInicio' => $fechaInicio,
+                                        'fechaTerminacion' => $fechaTerminacion
+                                    ];
+
+                                    $rows_profesionista['Profesionista'] = [
+                                        'curp' => $curp,
+                                        'nombre' => $nombre,
+                                        'primerApellido' => $primerApellido,
+                                        'segundoApellido' => $segundoApellido,
+                                        'correoElectronico' => $correoElectronico,
+                                        'cveCarrera' => $cveCarrera,
+                                        'folioControl' => $folioControl,
+                                        'idExpedicion' => $idExpedicion,
+                                        'fechaInicio' => $fechaInicio,
+                                        'fechaTerminacion' => $fechaTerminacion
+                                    ];
+                                    $newModel = new Profesionista();
+                                    $newModel->load($rows_profesionista);
+                                    $references_profesionista[$row] = $newModel;
+
                                     $array_profesionistas[] = [
                                         'cveCarrera' => $cveCarrera,
                                         'curp' => $curp,
@@ -480,6 +573,41 @@ class TitulosController extends Controller
                                 }
                             }
                         }
+                    }
+
+                    $bandera_error = false;
+                    $error = "";
+                    foreach ($references_institucion as $newModel) {
+                        if(!$newModel->validate()){
+                            $error .= "<br>Errores en Institución: <br>";
+                            foreach ($newModel->getFirstErrors() as $key => $value) {
+                                $error .= "<li>".$value.'</li>';
+                            }
+                            $bandera_error = true;
+                        }
+                    }
+                    foreach ($references_carrera as $newModel) {
+                        if(!$newModel->validate()){
+                            $error .= "<br>Errores en Carrera: <br>";
+                            foreach ($newModel->getFirstErrors() as $key => $value) {
+                                $error .= "<li>".$value.'</li>';
+                            }
+                            $bandera_error = true;
+                        }
+                    }
+                    foreach ($references_profesionista as $newModel) {
+                        if(!$newModel->validate()){
+                            $error .= "<br>Errores en Profesionista: <br>";
+                            foreach ($newModel->getFirstErrors() as $key => $value) {
+                                $error .= "<li>".$value.'</li>';
+                            }
+                            $bandera_error = true;
+                        }
+                    }
+                    if($bandera_error){
+                        \Yii::$app->session->setFlash('error', $error);
+                        unlink($ruta_archivo);
+                        return $this->redirect(['titulos/generarxml']);
                     }
                     
                     foreach ($array_instituciones as $key => $institucion) {
@@ -510,11 +638,7 @@ class TitulosController extends Controller
                         'numeroRvoe',
                         'cveInstitucion'
                     ];
-                    $col_titulo_electronico = [
-                        'cveInstitucion',
-                        'folioControl',
-                        'curpProfesionista'
-                    ];
+                   
                     $col_profesionista = [
                         'curp',
                         'nombre',
@@ -550,7 +674,6 @@ class TitulosController extends Controller
                         'fechaInicio',
                         'fechaTerminacion',
                         'noCedula',
-                        'folioControl',
                         'curpProfesionista'
                     ];
                     $col_responsable1 = [
@@ -590,11 +713,6 @@ class TitulosController extends Controller
                     $data_institucion = [];
                     $references_institucion = [];
 
-                    $rows_responsables = [];
-                    $data_responsables = [];
-                    $references_responsables1 = [];
-                    $references_responsables2 = [];
-
                     $rows_carrera = [];
                     $data_carrera = [];
                     $references_carrera = [];
@@ -602,6 +720,11 @@ class TitulosController extends Controller
                     $rows_profesionista = [];
                     $data_profesionista = [];
                     $references_profesionista = [];
+
+                    $rows_responsables = [];
+                    $data_responsables = [];
+                    $references_responsables1 = [];
+                    $references_responsables2 = [];
 
                     $rows_expedicion = [];
                     $data_expedicion = [];
@@ -615,25 +738,6 @@ class TitulosController extends Controller
                         foreach ($sheet->getRowIterator() as $row => $value) {
                             if ($row > 1 && $value[0] != ""  ) {
                                 if($hoja == 1){
-                                //titulo electronico
-                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [0], ''));
-                                    $folioControl = trim(ArrayHelper::getValue($value, [1], ''));
-                                    $curpProfesionista = trim(ArrayHelper::getValue($value, [2], ''));
-                                    $data_titulo_electronico[] = [
-                                        'cveInstitucion' => $cveInstitucion,
-                                        'folioControl' => $folioControl,
-                                        'curpProfesionista' => $curpProfesionista
-                                    ];
-
-                                    $rows_titulo_electronico['TituloElectronico'] = [
-                                        'cveInstitucion' => $cveInstitucion,
-                                        'folioControl' => $folioControl,
-                                        'curpProfesionista' => $curpProfesionista
-                                    ];
-                                    $newModel = new TituloElectronico();
-                                    $newModel->load($rows_titulo_electronico);
-                                    $references_titulo_electronico[$row] = $newModel;
-                                }else if($hoja == 2){
                                 //institucion
                                     $cveInstitucion = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreInstitucion = trim(ArrayHelper::getValue($value, [1], ''));
@@ -650,7 +754,7 @@ class TitulosController extends Controller
                                     $newModel->load($rows_institucion);
                                     $references_institucion[$row] = $newModel;
 
-                                }else if($hoja == 3){
+                                }else if($hoja == 2){
                                 //responsable 1
                                     $nombre = trim(ArrayHelper::getValue($value, [0], ''));
                                     $primerApellido = trim(ArrayHelper::getValue($value, [1], ''));
@@ -695,7 +799,7 @@ class TitulosController extends Controller
                                     $newModel->load($rows_responsables);
                                     $references_responsables1[$row] = $newModel;
 
-                                }else if($hoja == 4){
+                                }else if($hoja == 3){
                                 //responsable 2
                                     $nombre = trim(ArrayHelper::getValue($value, [0], ''));
                                     $primerApellido = trim(ArrayHelper::getValue($value, [1], ''));
@@ -740,7 +844,7 @@ class TitulosController extends Controller
                                     $newModel->load($rows_responsables);
                                     $references_responsables2[$row] = $newModel;
 
-                                }else if($hoja == 5){
+                                }else if($hoja == 4){
                                 //carrera
                                     $cveCarrera = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreCarrera = trim(ArrayHelper::getValue($value, [1], ''));
@@ -769,7 +873,7 @@ class TitulosController extends Controller
                                     $newModel->load($rows_carrera);
                                     $references_carrera[$row] = $newModel;
                                     
-                                }else if($hoja == 6){
+                                }else if($hoja == 5){
                                 //profesionista
                                     $curp = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombre = trim(ArrayHelper::getValue($value, [1], ''));
@@ -815,7 +919,7 @@ class TitulosController extends Controller
                                     $newModel->load($rows_profesionista);
                                     $references_profesionista[$row] = $newModel;
                                     
-                                }else if($hoja == 7){
+                                }else if($hoja == 6){
                                 //expedicion
                                     $idExpedicion = trim(ArrayHelper::getValue($value, [0], ''));
                                     $fechaExpedicion = ArrayHelper::getValue($value, [1], '');
@@ -867,7 +971,7 @@ class TitulosController extends Controller
                                     $newModel->load($rows_expedicion);
                                     $references_expedicion[$row] = $newModel;
 
-                                }else if($hoja == 8){
+                                }else if($hoja == 7){
                                 //antecedente
                                     $institucionProcedencia = trim(ArrayHelper::getValue($value, [0], ''));
                                     $idTipoEstudioAntecedente = trim(ArrayHelper::getValue($value, [1], ''));
@@ -877,10 +981,9 @@ class TitulosController extends Controller
                                     $fechaInicio = ArrayHelper::getValue($value, [5], '');
                                     $fechaTerminacion = ArrayHelper::getValue($value, [6], '');
                                     $noCedula = trim(ArrayHelper::getValue($value, [7], ''));
-                                    $folioControl = trim(ArrayHelper::getValue($value, [8], ''));
                                     $fechaInicio = (is_object($fechaInicio))?$fechaInicio->format('Y-m-d'):trim($fechaInicio);
                                     $fechaTerminacion = (is_object($fechaTerminacion))?$fechaTerminacion->format('Y-m-d'):trim($fechaTerminacion);
-                                    $curpProfesionista = trim(ArrayHelper::getValue($value, [9], ''));
+                                    $curpProfesionista = trim(ArrayHelper::getValue($value, [8], ''));
                                     $fechaInicio = (strlen($fechaInicio) > 1)?$fechaInicio:null;
 
 
@@ -893,7 +996,6 @@ class TitulosController extends Controller
                                         'fechaInicio' => $fechaInicio,
                                         'fechaTerminacion' => $fechaTerminacion,
                                         'noCedula' => $noCedula,
-                                        'folioControl' => $folioControl,
                                         'curpProfesionista' => $curpProfesionista
                                     ];
 
@@ -906,7 +1008,6 @@ class TitulosController extends Controller
                                         'fechaInicio' => $fechaInicio,
                                         'fechaTerminacion' => $fechaTerminacion,
                                         'noCedula' => $noCedula,
-                                        'folioControl' => $folioControl,
                                         'curpProfesionista' => $curpProfesionista
                                     ];
                                     $newModel = new Antecedente();
@@ -1038,23 +1139,6 @@ class TitulosController extends Controller
                             )->execute();
                         }
 
-                        foreach ($references_titulo_electronico as $newModel) {
-                            if(!$newModel->validate()){
-                                $error .= "<br>Errores en Título electrónico: <br>";
-                                foreach ($newModel->getFirstErrors() as $key => $value) {
-                                    $error .= "<li>".$value.'</li>';
-                                }
-                                $bandera_error = true;
-                            }
-                        }
-
-                        if(!$bandera_error){
-                            Yii::$app->db->createCommand()->batchInsert(
-                                'titulo_electronico', 
-                                $col_titulo_electronico, 
-                                $data_titulo_electronico
-                            )->execute();
-                        }
                         if(!$bandera_error){
                             $transaction->commit();
                             \Yii::$app->session->setFlash('success', "Información guardada con éxito.");
@@ -1135,6 +1219,24 @@ class TitulosController extends Controller
         
     }
 
+    public function actionVaciartablas(){
+        if (Yii::$app->request->isPost) {
+            $data = Yii::$app->request->post();
+            $password = $data['password'];
+            if($password == "7h8j9k0l"){
+                $expedicion = Expedicion::deleteAll();
+                $antecedente = Antecedente::deleteAll();
+                $responsables = Responsables::deleteAll();
+                $profesionista = Profesionista::deleteAll();
+                $carrera = Carrera::deleteAll();
+                $institucion = Institucion::deleteAll();
+                \Yii::$app->session->setFlash('success', 'Información eliminada exitosamente');
+            }else{
+                \Yii::$app->session->setFlash('error', 'Contraseña de borrado incorrecta');
+            }
+        }
+        return $this->render('vaciartablas');
+    }
    
 
 }
