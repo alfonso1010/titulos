@@ -8,7 +8,7 @@
                 <img src="<?= $directoryAsset ?>/img/user2-160x160.jpg" class="img-circle" alt="User Image"/>
             </div>
             <div class="pull-left info">
-                <p>Usuario</p>
+                <p><?= Yii::$app->user->identity->username ?></p>
 
                 <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
             </div>
@@ -23,6 +23,7 @@
             if ($rol->name == "admin"){
                 array_push($items,  ['label' => 'Generación de Títulos XML', 'icon' => 'file-code-o', 'url' => ['titulos/generarxml']]);
                 array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);
+                array_push($items,  ['label' => 'Usuarios', 'icon' => 'file-code-o', 'url' => ['usuario/index']]);
                 array_push($items,  ['label' => 'Limpiar BD', 'icon' => 'file-code-o', 'url' => ['titulos/vaciartablas']]);
             }else{
                 array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);

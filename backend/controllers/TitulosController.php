@@ -26,6 +26,7 @@ use common\models\Profesionista;
 use common\models\Expedicion;
 use common\models\Antecedente;
 use common\helpers\UtilidadesHelper;
+use common\models\AuthAssignment;
 
 /**
  * BuzonController implements the CRUD actions for Buzon model.
@@ -52,9 +53,19 @@ class TitulosController extends Controller
  
     public function actionFirmarxml()
     {
+        $instituciones = Institucion::find()->all();
+        $rol = AuthAssignment::findOne(['user_id' => Yii::$app->user->getId()]);
+        $rol = (!is_null($rol))?$rol->item_name:"No asignado";
+        if($rol == "universidad"){
+            $in = Yii::$app->user->identity->instituciones;
+            if(!is_null($in)){
+                $instituciones = Institucion::find()->where('cveInstitucion IN ('.$in.')')->all();
+            }else{
+                $instituciones = [];
+            } 
+        }
         $busca_instituciones =  ArrayHelper::map(
-            Institucion::find()
-            ->all(),
+            $instituciones,
             'cveInstitucion',
             'nombreInstitucion'
         );

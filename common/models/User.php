@@ -53,8 +53,9 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            ['status', 'default', 'value' => self::STATUS_INACTIVE],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+            [['username', 'email', 'password_hash'], 'required'],
+            [['instituciones'], 'safe'],
+            [['username'], 'unique'],
         ];
     }
 
@@ -208,5 +209,24 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    /**
+     * Asigna el rol al usuario en cuestion
+     * @param integer $id_usuario
+     * @param string $rol nombre del rol
+     * @return
+     */
+    public static function asignaRol($id_cliente, $setrol = null) {
+        $auth = Yii::$app->authManager;
+        $auth->revokeAll($id_cliente);
+        if ($setrol !== null && !empty($setrol)) {
+            $rol = $auth->getRole($setrol);
+            if ($rol) {
+                $auth->assign($rol, $id_cliente);
+            } else {
+                throw new \yii\web\HttpException(404, 'El rol no existe.');
+            }
+        }
     }
 }
