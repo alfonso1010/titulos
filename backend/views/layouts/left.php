@@ -23,10 +23,17 @@
             if ($rol->name == "admin"){
                 array_push($items,  ['label' => 'Generación de Títulos XML', 'icon' => 'file-code-o', 'url' => ['titulos/generarxml']]);
                 array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);
+                array_push($items,  ['label' => 'Enviar Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/enviarsep']]);
+                array_push($items,  ['label' => 'Títulos enviados QA', 'icon' => 'file-code-o', 'url' => ['titulos/qa']]);
+                array_push($items,  ['label' => 'Títulos enviados Producción', 'icon' => 'file-code-o', 'url' => ['titulos/prod']]);
                 array_push($items,  ['label' => 'Usuarios', 'icon' => 'file-code-o', 'url' => ['usuario/index']]);
                 array_push($items,  ['label' => 'Limpiar BD', 'icon' => 'file-code-o', 'url' => ['titulos/vaciartablas']]);
+                
             }else{
                 array_push($items,  ['label' => 'Firmado Electrónico Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/firmarxml']]);
+                array_push($items,  ['label' => 'Enviar Títulos', 'icon' => 'file-code-o', 'url' => ['titulos/enviarsep']]);
+                array_push($items,  ['label' => 'Títulos enviados QA', 'icon' => 'file-code-o', 'url' => ['titulos/qa']]);
+                array_push($items,  ['label' => 'Títulos enviados Producción', 'icon' => 'file-code-o', 'url' => ['titulos/prod']]);
             }
             array_push($items, ['label' => 'Login', 'url' => ['site/login'], 'visible' => Yii::$app->user->isGuest]);
 

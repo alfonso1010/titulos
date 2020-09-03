@@ -6,6 +6,7 @@ use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 use yii\web\View;
 use kartik\file\FileInput;
+use kartik\widgets\Select2;
 
 
 $this->title = 'Limpieza de tablas';
@@ -47,7 +48,7 @@ $this->title = 'Limpieza de tablas';
 			],
 		]);
 	?>
-  	<div class="modal-dialog">
+  <div class="modal-dialog" style="width: 60%;">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -55,9 +56,31 @@ $this->title = 'Limpieza de tablas';
         <h4 class="modal-title">Confirmación</h4>
       </div>
       <div class="modal-body">
-        <label>Por favor ingrese contraseña de borrado:</label>
-        <input type="password" name="password" class="active-form">
+        <div class="col-xs-12">
+          <div class="col-sm-6">
+            <label>Institución</label>
+            <?php
+              echo Select2::widget([
+                'name' => 'institucion',
+                'id' => 'institucion',
+                'data' => $busca_instituciones,
+                'options' => [
+                    'placeholder' => '',
+                    'multiple' => true,
+                ],
+                'pluginOptions' => [
+                    'allowClear' => true
+                ],
+            ]);
+            ?>
+          </div>
+          <div class="col-sm-4">
+            <label>Por favor ingrese contraseña de borrado:</label>
+            <input type="password" name="password" class="active-form">
+          </div>
+        </div>
       </div>
+      <br><br><br>
       <div class="modal-footer">
         <?= Html::submitButton("Eliminar", ['class' => 'btn btn-danger','style' => "font-size:20px"])?>
         <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cerrar</button>

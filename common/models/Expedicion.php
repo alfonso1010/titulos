@@ -39,10 +39,11 @@ class Expedicion extends \yii\db\ActiveRecord
     {
         return [
             [['idExpedicion', 'fechaExpedicion', 'idModalidadTitulacion', 'modalidadTitulacion', 'cumplioServicioSocial', 'idFundamentoLegalServicioSocial', 'fundamentoLegalServicioSocial', 'idEntidadFederativa', 'entidadFederativa', 'curpProfesionista'], 'required'],
-            [['idExpedicion', 'idModalidadTitulacion', 'cumplioServicioSocial', 'idFundamentoLegalServicioSocial'], 'integer'],
+            [['idModalidadTitulacion', 'cumplioServicioSocial', 'idFundamentoLegalServicioSocial'], 'integer'],
             [['fechaExpedicion', 'fechaExamenProfesional', 'fechaExencionExamenProfesional'], 'safe'],
             [['modalidadTitulacion', 'fundamentoLegalServicioSocial', 'idEntidadFederativa', 'entidadFederativa'], 'string', 'max' => 100],
             [['curpProfesionista'], 'string', 'max' => 18],
+            [['idExpedicion'], 'string', 'max' => 255],
             [['idExpedicion'], 'unique'],
             [['curpProfesionista'], 'exist', 'skipOnError' => true, 'targetClass' => Profesionista::className(), 'targetAttribute' => ['curpProfesionista' => 'curp']],
         ];

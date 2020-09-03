@@ -9,6 +9,7 @@ use yii\filters\VerbFilter;
 use yii\helpers\VarDumper;
 use common\models\formularios\GenerarXmlForm;
 use common\models\formularios\FirmaTituloForm;
+use common\models\formularios\EnviarTituloForm;
 use yii\web\UploadedFile;
 use PHPExcel_Reader_Exception;
 use PHPExcel_Worksheet as Worksheet;
@@ -27,6 +28,8 @@ use common\models\Expedicion;
 use common\models\Antecedente;
 use common\helpers\UtilidadesHelper;
 use common\models\AuthAssignment;
+use common\models\TitulosWs;
+use common\models\TituloWsSearch;
 
 /**
  * BuzonController implements the CRUD actions for Buzon model.
@@ -156,23 +159,22 @@ class TitulosController extends Controller
                     xmlwriter_start_element($xw, 'FirmaResponsables'); //INICA RESPONSABLES
                     foreach ($responsables as $r => $responsable) {
                         if($r == 0){
-                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
-
+                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->cargo|$responsable->abrTitulo|$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|$expedicion->fechaExamenProfesional|$expedicion->fechaExencionExamenProfesional|$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa|$antecedente->fechaInicio|$antecedente->fechaTerminacion|$antecedente->noCedula||";
                             $formulario->archivo_cer1 = UploadedFile::getInstance($formulario, 'archivo_cer1');
-                            $formulario->archivo_key1 = UploadedFile::getInstance($formulario, 'archivo_key1');
                             $tmp_file1_cer = $formulario->archivo_cer1->tempName;
-                            $tmp_file1_key = $formulario->archivo_key1->tempName;
-                            $nombre_key = $formulario->archivo_key1->name;
                             $cer_file = file_get_contents($tmp_file1_cer);
                             $cer_base64 = base64_encode($cer_file);
+                            $formulario->archivo_key1 = UploadedFile::getInstance($formulario, 'archivo_key1');
+                            $tmp_file1_key = $formulario->archivo_key1->tempName;
+                            $nombre_key = $formulario->archivo_key1->name;
                             $respuesta = UtilidadesHelper::generarFirma($tmp_file1_key,$nombre_key,$formulario->password1,$cadena_original);
                             if($respuesta['code'] != 200 | !isset($respuesta['response']->data)){
-                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
+                                \Yii::$app->session->setFlash('error', 'Datos inconsistentes en la e.firma');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
                             $data = $respuesta['response']->data;
                             if(!isset($data['firma'])){
-                                \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
+                                \Yii::$app->session->setFlash('error', 'Datos inconsistentes en la e.firma');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
 
@@ -195,9 +197,11 @@ class TitulosController extends Controller
                                 xmlwriter_start_attribute($xw, 'cargo');
                                     xmlwriter_text($xw,$responsable->cargo);
                                 xmlwriter_end_attribute($xw);
-                                xmlwriter_start_attribute($xw, 'abrTitulo');
-                                    xmlwriter_text($xw,$responsable->abrTitulo);
-                                xmlwriter_end_attribute($xw);
+                                if(strlen($responsable->abrTitulo) > 0){
+                                    xmlwriter_start_attribute($xw, 'abrTitulo');
+                                        xmlwriter_text($xw,$responsable->abrTitulo);
+                                    xmlwriter_end_attribute($xw);
+                                }
                                 xmlwriter_start_attribute($xw, 'sello');
                                     xmlwriter_text($xw,$data['firma']);
                                 xmlwriter_end_attribute($xw);
@@ -210,7 +214,7 @@ class TitulosController extends Controller
                             xmlwriter_end_element($xw);
 
                         }else if($r == 1){
-                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->curp||$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|||$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa||$antecedente->fechaTerminacion|||";
+                           $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->cargo|$responsable->abrTitulo|$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|$expedicion->fechaExamenProfesional|$expedicion->fechaExencionExamenProfesional|$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa|$antecedente->fechaInicio|$antecedente->fechaTerminacion|$antecedente->noCedula||";
                             $formulario->archivo_cer2 = UploadedFile::getInstance($formulario, 'archivo_cer2');
                             $formulario->archivo_key2 = UploadedFile::getInstance($formulario, 'archivo_key2');
                             $tmp_file2_cer = $formulario->archivo_cer2->tempName;
@@ -248,9 +252,11 @@ class TitulosController extends Controller
                                 xmlwriter_start_attribute($xw, 'cargo');
                                     xmlwriter_text($xw,$responsable->cargo);
                                 xmlwriter_end_attribute($xw);
-                                xmlwriter_start_attribute($xw, 'abrTitulo');
-                                    xmlwriter_text($xw,$responsable->abrTitulo);
-                                xmlwriter_end_attribute($xw);
+                                if(strlen($responsable->abrTitulo) > 0){
+                                    xmlwriter_start_attribute($xw, 'abrTitulo');
+                                        xmlwriter_text($xw,$responsable->abrTitulo);
+                                    xmlwriter_end_attribute($xw);
+                                }
                                 xmlwriter_start_attribute($xw, 'sello');
                                     xmlwriter_text($xw,$data['firma']);
                                 xmlwriter_end_attribute($xw);
@@ -323,9 +329,11 @@ class TitulosController extends Controller
                         xmlwriter_start_attribute($xw, 'modalidadTitulacion');
                             xmlwriter_text($xw,$expedicion->modalidadTitulacion);
                         xmlwriter_end_attribute($xw);
-                        xmlwriter_start_attribute($xw, 'fechaExamenProfesional');
-                            xmlwriter_text($xw,$expedicion->fechaExamenProfesional);
-                        xmlwriter_end_attribute($xw);
+                        if(strlen($expedicion->fechaExamenProfesional) > 0){
+                            xmlwriter_start_attribute($xw, 'fechaExamenProfesional');
+                                xmlwriter_text($xw,$expedicion->fechaExamenProfesional);
+                            xmlwriter_end_attribute($xw);
+                        }
                         xmlwriter_start_attribute($xw, 'cumplioServicioSocial');
                             xmlwriter_text($xw,$expedicion->cumplioServicioSocial);
                         xmlwriter_end_attribute($xw);
@@ -359,9 +367,11 @@ class TitulosController extends Controller
                         xmlwriter_start_attribute($xw, 'entidadFederativa');
                             xmlwriter_text($xw,$antecedente->entidadFederativa);
                         xmlwriter_end_attribute($xw);
-                        xmlwriter_start_attribute($xw, 'fechaInicio');
-                            xmlwriter_text($xw,$antecedente->fechaInicio);
-                        xmlwriter_end_attribute($xw);
+                        if(strlen($antecedente->fechaInicio) > 0){
+                            xmlwriter_start_attribute($xw, 'fechaInicio');
+                                xmlwriter_text($xw,$antecedente->fechaInicio);
+                            xmlwriter_end_attribute($xw);
+                        }
                         xmlwriter_start_attribute($xw, 'fechaTerminacion');
                             xmlwriter_text($xw,$antecedente->fechaTerminacion);
                         xmlwriter_end_attribute($xw);
@@ -373,12 +383,14 @@ class TitulosController extends Controller
 
                 file_put_contents("xml/".$curp.'.xml',xmlwriter_output_memory($xw));
                 if(count($arr_alumnos) == 1){
+                     \Yii::$app->session->setFlash('success', 'Xml generado con éxito');
                     return Yii::$app->response->sendFile("xml/".$curp.'.xml');
                 }else{
                     $zip->addFile("xml/".$curp.'.xml');
                 }
             }
             $zip->close();
+            \Yii::$app->session->setFlash('success', 'Xml generado con éxito');
             return Yii::$app->response->sendFile($nombre_zip);
         }
     }
@@ -615,11 +627,11 @@ class TitulosController extends Controller
                             $bandera_error = true;
                         }
                     }
-                    if($bandera_error){
+                   /* if($bandera_error){
                         \Yii::$app->session->setFlash('error', $error);
                         unlink($ruta_archivo);
                         return $this->redirect(['titulos/generarxml']);
-                    }
+                    }*/
                     
                     foreach ($array_instituciones as $key => $institucion) {
                         $array_revision[$institucion['cveInstitucion']]['institucion'] = $institucion['nombreInstitucion'];
@@ -1231,23 +1243,168 @@ class TitulosController extends Controller
     }
 
     public function actionVaciartablas(){
+        $instituciones = Institucion::find()->all();
+        
+        $busca_instituciones =  ArrayHelper::map(
+            $instituciones,
+            'cveInstitucion',
+            'nombreInstitucion'
+        );
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post();
-            $password = $data['password'];
+            $password = ArrayHelper::getValue($data,'password', '');
+            $instituciones = ArrayHelper::getValue($data,'institucion', []);
             if($password == "7h8j9k0l"){
-                $expedicion = Expedicion::deleteAll();
+                foreach ($instituciones as $i => $institucion) {
+                    $busca_institucion = Institucion::findOne(['cveInstitucion' => $institucion]);
+                    $busca_carreras = Carrera::findAll(['cveInstitucion' => $institucion]);
+                    foreach ($busca_carreras as $c => $carrera) {
+                        $busca_profesionista = Profesionista::findAll(['cveCarrera' => $carrera->cveCarrera]);
+                        foreach ($busca_profesionista as $p => $profesionista) {
+                            $elimina_antecedentes = Antecedente::deleteAll(['curpProfesionista' => $profesionista->curp]);
+                            $elimina_expedicion = Expedicion::deleteAll(['curpProfesionista' => $profesionista->curp]);
+                            $profesionista->delete();
+                        }
+                        $carrera->delete();
+                    }
+                    $elimina_responables = Responsables::deleteAll(['cveInstitucion' => $institucion]);
+                    $busca_institucion->delete();
+                }
+                /*$expedicion = Expedicion::deleteAll();
                 $antecedente = Antecedente::deleteAll();
                 $responsables = Responsables::deleteAll();
                 $profesionista = Profesionista::deleteAll();
                 $carrera = Carrera::deleteAll();
-                $institucion = Institucion::deleteAll();
+                $institucion = Institucion::deleteAll();*/
                 \Yii::$app->session->setFlash('success', 'Información eliminada exitosamente');
             }else{
                 \Yii::$app->session->setFlash('error', 'Contraseña de borrado incorrecta');
             }
         }
-        return $this->render('vaciartablas');
+        return $this->render('vaciartablas',[
+            'busca_instituciones' => $busca_instituciones
+        ]);
     }
-   
+
+    public function actionEnviarsep(){
+        $data_respuesta = [];
+        $formulario = new EnviarTituloForm();
+        $instituciones = Institucion::find()->all();
+        $rol = AuthAssignment::findOne(['user_id' => Yii::$app->user->getId()]);
+        $rol = (!is_null($rol))?$rol->item_name:"No asignado";
+        if($rol == "universidad"){
+            $in = Yii::$app->user->identity->instituciones;
+            if(!is_null($in)){
+                $instituciones = Institucion::find()->where('cveInstitucion IN ('.$in.')')->all();
+            }else{
+                $instituciones = [];
+            } 
+        }
+        $busca_instituciones =  ArrayHelper::map(
+            $instituciones,
+            'cveInstitucion',
+            'nombreInstitucion'
+        );
+        if (Yii::$app->request->isPost) {
+            $data = Yii::$app->request->post();
+            $formulario->load($data);
+            $formulario->titulo = UploadedFile::getInstance($formulario, 'titulo');
+            if($formulario->validate()){
+                $tmp_titulo = $formulario->titulo->tempName;
+                $nombre_titulo = $formulario->titulo->name;
+                $respuesta_envio = UtilidadesHelper::enviarTitulo($formulario->ambiente,$formulario->nombre_archivo,$tmp_titulo,$nombre_titulo,$formulario->usuario_ws,$formulario->password_ws);
+                if($respuesta_envio['code'] != 200 | !isset($respuesta_envio['response']->data)){
+                    \Yii::$app->session->setFlash('error', 'Ocurrió un error con el servidor');
+                }
+                $data_respuesta = $respuesta_envio['response']->data;
+                if(strlen($data_respuesta['numeroLote']) == 0){
+                    \Yii::$app->session->setFlash('error', 'Ocurrió un error con el servidor, revise el mensaje de error');
+                }else{
+                    $titulo = new TitulosWs();
+                    $titulo->cveInstitucion = $formulario->institucion;
+                    $titulo->nombre_archivo = $formulario->nombre_archivo;
+                    $titulo->numero_lote = $data_respuesta['numeroLote'];
+                    $titulo->mensaje = $data_respuesta['mensaje'];
+                    $titulo->fecha_envio = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
+                    $titulo->ambiente =  $formulario->ambiente;
+                    $titulo->save(false);
+
+                    $formulario->usuario_ws = "";
+                    $formulario->password_ws = "";
+                    \Yii::$app->session->setFlash('success', 'Título(s) enviados con éxito');
+                }
+            }
+        }
+
+        return $this->render('enviarsep',[
+            'formulario' => $formulario,
+            'busca_instituciones' => $busca_instituciones,
+            'data_respuesta' => $data_respuesta
+        ]);
+    }
+
+    public function actionQa()
+    {
+        $searchModel  = new TituloWsSearch();
+        $dataProvider = $searchModel->searchQa(Yii::$app->request->queryParams);
+
+        return $this->render('qa', [
+            'searchModel'  => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+    
+    public function actionConsultarqa()
+    {
+       if (Yii::$app->request->isAjax) {
+            $data = Yii::$app->request->post();
+            $usuario_ws = ArrayHelper::getValue($data,"usuario_ws", '');
+            $password_ws = ArrayHelper::getValue($data,"password_ws", '');
+            $id_titulo = ArrayHelper::getValue($data,"id_titulo", '');
+            $busca_titulo = TitulosWs::findOne($id_titulo);
+            $no_lote = ArrayHelper::getValue($busca_titulo,"numero_lote", '');
+            $respuesta_envio = UtilidadesHelper::consultarTitulo(0,$no_lote,$usuario_ws,$password_ws);
+            return json_encode($respuesta_envio['response']->data);
+            
+        }
+    }
+
+    public function actionCancelarqa()
+    {
+       if (Yii::$app->request->isAjax) {
+            $data = Yii::$app->request->post();
+            $usuario_ws = ArrayHelper::getValue($data,"usuario_ws", '');
+            $password_ws = ArrayHelper::getValue($data,"password_ws", '');
+            $motivo_ws = ArrayHelper::getValue($data,"motivo_ws", '');
+            $folio_control = ArrayHelper::getValue($data,"folio_ws", '');
+            $id_titulo = ArrayHelper::getValue($data,"id_titulo", '');
+            $respuesta_envio = UtilidadesHelper::cancelarTitulo(0,$folio_control,$motivo_ws,$usuario_ws,$password_ws);
+            return json_encode($respuesta_envio['response']->data);
+            
+        }
+    }
+
+    public function actionDescargarqa()
+    {
+       if (Yii::$app->request->isPost) {
+            $data = Yii::$app->request->post();
+            //print_r($data);die();
+            $usuario_ws = ArrayHelper::getValue($data,"usuario_ws", '');
+            $password_ws = ArrayHelper::getValue($data,"password_ws", '');
+            $id_titulo = ArrayHelper::getValue($data,"id_titulo", '');
+            $busca_titulo = TitulosWs::findOne($id_titulo);
+            $no_lote = ArrayHelper::getValue($busca_titulo,"numero_lote", '');
+            $respuesta_envio = UtilidadesHelper::descargarTitulo(0,$no_lote,$usuario_ws,$password_ws);
+            if(isset($respuesta_envio['response']->data)){
+                //print_r($respuesta_envio['response']->data['titulosBase64']);die();
+                $decoded = base64_decode($respuesta_envio['response']->data['titulosBase64']);
+                $file = $no_lote.'.zip';
+                file_put_contents($file, $decoded);
+                return Yii::$app->response->sendFile($file);
+            }else{
+
+            }
+        }
+    }
 
 }

@@ -54,6 +54,89 @@ class UtilidadesHelper {
             'code'     => $httpCode
         ];
     }
+
+    public static function enviarTitulo($ambiente,$nombre_archivo,$file_temp,$nombre_file,$usuario,$password){
+        $client = new Client();
+        $response = $client->createRequest()
+        ->setMethod("POST")
+        ->setUrl("http://localhost:8080/cargarTitulo")
+        ->setData([
+            'ambiente' => $ambiente,
+            'nombre_archivo' => $nombre_archivo,
+            'usuario' => $usuario,
+            'password' => $password
+        ])
+        ->addFile('file',$file_temp,['fileName' => $nombre_file])
+        ->send();
+        
+        $httpCode = (int)$response->headers['http-code'];
+       
+        return [
+            'response' => $response,
+            'code'     => $httpCode
+        ];
+    }
+
+    public static function consultarTitulo($ambiente,$no_lote,$usuario,$password){
+        $client = new Client();
+        $response = $client->createRequest()
+        ->setMethod("POST")
+        ->setUrl("http://localhost:8080/consultarTitulo")
+        ->setData([
+            'ambiente' => $ambiente,
+            'no_lote' => $no_lote,
+            'usuario' => $usuario,
+            'password' => $password
+        ])
+        ->send();
+        $httpCode = (int)$response->headers['http-code'];
+       
+        return [
+            'response' => $response,
+            'code'     => $httpCode
+        ];
+    }
+
+    public static function cancelarTitulo($ambiente,$folio_control,$motivo,$usuario,$password){
+        $client = new Client();
+        $response = $client->createRequest()
+        ->setMethod("POST")
+        ->setUrl("http://localhost:8080/cancelarTitulo")
+        ->setData([
+            'ambiente' => $ambiente,
+            'folio_control' => $folio_control,
+            'motivo' => $motivo,
+            'usuario' => $usuario,
+            'password' => $password
+        ])
+        ->send();
+        $httpCode = (int)$response->headers['http-code'];
+       
+        return [
+            'response' => $response,
+            'code'     => $httpCode
+        ];
+    }
+
+     public static function descargarTitulo($ambiente,$no_lote,$usuario,$password){
+        $client = new Client();
+        $response = $client->createRequest()
+        ->setMethod("POST")
+        ->setUrl("http://localhost:8080/descargarTitulo")
+        ->setData([
+            'ambiente' => $ambiente,
+            'no_lote' => $no_lote,
+            'usuario' => $usuario,
+            'password' => $password
+        ])
+        ->send();
+        $httpCode = (int)$response->headers['http-code'];
+       
+        return [
+            'response' => $response,
+            'code'     => $httpCode
+        ];
+    }
 }
 
 ?>
