@@ -21,7 +21,7 @@ $fieldOptions2 = [
 
 <div class="login-box">
     <div class="login-logo">
-        <a href="#"><b>Títulos </b>Universitarios</a>
+        <a href="#"><b> TÍTULOS ELECTRÓNICOS CPI </b></a>
     </div>
     <!-- /.login-logo -->
     <div class="login-box-body">

@@ -37,13 +37,12 @@ class Antecedente extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['institucionProcedencia', 'idTipoEstudioAntecedente', 'tipoEstudioAntecedente', 'idEntidadFederativa', 'entidadFederativa', 'fechaTerminacion', 'curpProfesionista'], 'required'],
+            [['institucionProcedencia', 'idTipoEstudioAntecedente', 'tipoEstudioAntecedente', 'idEntidadFederativa', 'entidadFederativa', 'fechaTerminacion', 'folioControl'], 'required'],
             [['idTipoEstudioAntecedente'], 'integer'],
             [['fechaInicio', 'fechaTerminacion'], 'safe'],
-            [['institucionProcedencia', 'tipoEstudioAntecedente', 'idEntidadFederativa', 'entidadFederativa', 'noCedula'], 'string', 'max' => 100],
-            [['curpProfesionista'], 'string', 'max' => 18],
+            [['institucionProcedencia', 'tipoEstudioAntecedente', 'idEntidadFederativa', 'entidadFederativa', 'noCedula','folioControl'], 'string', 'max' => 250],
             [['idAntecedente'], 'unique'],
-            [['curpProfesionista'], 'exist', 'skipOnError' => true, 'targetClass' => Profesionista::className(), 'targetAttribute' => ['curpProfesionista' => 'curp']],
+            [['folioControl'], 'exist', 'skipOnError' => true, 'targetClass' => Profesionista::className(), 'targetAttribute' => ['folioControl' => 'folioControl']],
         ];
     }
 
@@ -62,17 +61,8 @@ class Antecedente extends \yii\db\ActiveRecord
             'fechaInicio' => 'Fecha Inicio',
             'fechaTerminacion' => 'Fecha Terminacion',
             'noCedula' => 'No Cedula',
-            'curpProfesionista' => 'Curp Profesionista',
+            'folioControl' => 'Folio Control',
         ];
     }
 
-    /**
-     * Gets query for [[CurpProfesionista0]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getCurpProfesionista0()
-    {
-        return $this->hasOne(Profesionista::className(), ['curp' => 'curpProfesionista']);
-    }
 }

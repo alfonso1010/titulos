@@ -22,15 +22,21 @@ $this->registerJs('
 	    	var alumnos = $("#alumnos").val();
 	    	$("#alumnos").val(curp+","+alumnos);
 	    	$("#profesionista").val("");
-	    	$("option[value=\'"+profesionista+"\']").remove(); 
-	    	$("#seleccionados").append("<tr><td style=\"border: 1px solid;border-color: brown\">"+carrera+"</td><td style=\"border: 1px solid;border-color: brown\">"+curp+"</td><td style=\"border: 1px solid;border-color: brown\">"+nombre+"</td></tr>");
+	    	$("#profesionista option[value=\'"+profesionista+"\']").prop("disabled", true);
+            $("#profesionista").change();
+	    	$("#seleccionados").append("<tr id=\""+curp+"\"><td style=\"border: 1px solid;border-color: brown\">"+carrera+"</td><td style=\"border: 1px solid;border-color: brown\">"+curp+"</td><td style=\"border: 1px solid;border-color: brown\">"+nombre+"</td><td style=\"border: 1px solid;border-color: brown\"><button onclick=\'deseleccionado(\""+curp+"\",\""+profesionista+"\");\' class=\"btn btn-danger\">Quitar</button></td></tr>");
     	}else{
     		alert("Por favor seleccione un profesionista");
     	}
-    	
-    	
     }
 
+    function deseleccionado(curp,profesionista){
+        $("#"+curp).remove();
+        var alumnos = $("#alumnos").val();
+        var nuevoal = alumnos.replace(curp+",","");
+        $("#alumnos").val(nuevoal);
+        $("#profesionista option[value=\'"+profesionista+"\']").prop("disabled", false);
+    }
 
 ', View::POS_END);
 
@@ -133,6 +139,7 @@ $this->registerJs('
 			                	<th style="border: 1px solid;border-color: brown;color: black"><center>Carrera</center></th>
 			                	<th style="border: 1px solid;border-color: brown;color: black"><center>Curp</center></th>
 			                	<th style="border: 1px solid;border-color: brown;color: black"><center>Profesionista</center></th>
+                                <th style="border: 1px solid;border-color: brown;color: black"><center>Acciones</center></th>
 		                	</tr>	             
 		                </tbody>
 	            	</table>

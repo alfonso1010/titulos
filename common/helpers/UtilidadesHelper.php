@@ -39,7 +39,7 @@ class UtilidadesHelper {
         ->addHeaders([
             'content-type' => 'multipart/form-data'
         ])
-        ->setUrl("http://localhost:8080/generarFirma")
+        ->setUrl("https://pruebacon12.herokuapp.com/generarFirma")
         ->setData([
             'password' => $password,
             'cadena_original' => $cadena_original
@@ -59,7 +59,7 @@ class UtilidadesHelper {
         $client = new Client();
         $response = $client->createRequest()
         ->setMethod("POST")
-        ->setUrl("http://localhost:8080/cargarTitulo")
+        ->setUrl("https://pruebacon12.herokuapp.com/cargarTitulo")
         ->setData([
             'ambiente' => $ambiente,
             'nombre_archivo' => $nombre_archivo,
@@ -81,7 +81,7 @@ class UtilidadesHelper {
         $client = new Client();
         $response = $client->createRequest()
         ->setMethod("POST")
-        ->setUrl("http://localhost:8080/consultarTitulo")
+        ->setUrl("https://pruebacon12.herokuapp.com/consultarTitulo")
         ->setData([
             'ambiente' => $ambiente,
             'no_lote' => $no_lote,
@@ -101,7 +101,7 @@ class UtilidadesHelper {
         $client = new Client();
         $response = $client->createRequest()
         ->setMethod("POST")
-        ->setUrl("http://localhost:8080/cancelarTitulo")
+        ->setUrl("https://pruebacon12.herokuapp.com/cancelarTitulo")
         ->setData([
             'ambiente' => $ambiente,
             'folio_control' => $folio_control,
@@ -122,7 +122,7 @@ class UtilidadesHelper {
         $client = new Client();
         $response = $client->createRequest()
         ->setMethod("POST")
-        ->setUrl("http://localhost:8080/descargarTitulo")
+        ->setUrl("https://pruebacon12.herokuapp.com/descargarTitulo")
         ->setData([
             'ambiente' => $ambiente,
             'no_lote' => $no_lote,

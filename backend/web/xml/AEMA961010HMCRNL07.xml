@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TituloElectronico xmlns="https://www.siged.sep.gob.mx/titulos/" version="1.0" folioControl="20121023SICERT0151610X0042086X00013">
+<TituloElectronico xmlns="https://www.siged.sep.gob.mx/titulos/" version="1" folioControl="1010">
  <FirmaResponsables>
   <FirmaResponsable nombre="Responsable 1" primerApellido="apellido1" segundoApellido="apellido1" curp="AEMA1" idCargo="1" cargo="CARGO 1" abrTitulo="ARB1" sello="SELLO 1" certificadoResponsable="" noCertificadoResponsable="1000000401880220"/>
   <FirmaResponsable nombre="Responsable 2" primerApellido="apellido2" segundoApellido="apellido2" curp="AEMA2" idCargo="2" cargo="CARGO 2" abrTitulo="ARB2" sello="2" certificadoResponsable="" noCertificadoResponsable="1000000401880220"/>

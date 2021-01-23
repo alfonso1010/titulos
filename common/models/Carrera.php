@@ -40,8 +40,11 @@ class Carrera extends \yii\db\ActiveRecord
             [['idAutorizacionReconocimiento'], 'integer'],
             [['cveCarrera', 'cveInstitucion'], 'string', 'max' => 7],
             [['nombreCarrera', 'autorizacionReconocimiento', 'numeroRvoe'], 'string', 'max' => 100],
-            [['nombreCarrera'], 'unique'],
-            [['cveCarrera'], 'unique'],
+            [
+                'cveCarrera',
+                'unique',
+                'targetAttribute' => ['cveCarrera', 'nombreCarrera','cveInstitucion'],
+            ],
             [['cveInstitucion'], 'exist', 'skipOnError' => true, 'targetClass' => Institucion::className(), 'targetAttribute' => ['cveInstitucion' => 'cveInstitucion']],
         ];
     }

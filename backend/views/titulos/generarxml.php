@@ -24,46 +24,21 @@ $this->title = 'Generar Títulos XML';
 
         <div class="row" style="margin-left:15px ">
             <div class="col-xs-8">
-            	<h3 style="color: brown">Carga de información para construcción de Título Electrónico XML</h3>
+            	<h3 style="color: brown">Carga de información para construcción de Título Electrónico</h3><br>
             </div>
         </div>
         <div class="row" style="margin-left:15px ">
         	<div class="col-xs-12">
 				<div class="col-sm-12">
 		        	<div class="font-black text-content portlet-title bg-warning">
-		                <div class="bg-warning text-justify">
-		                  <strong><em>Antes de importar, es indispensable leer las siguientes instrucciones:
-		                  </em></strong>
-		                </div>
 		                <div>
 		                  <ul>
-		                    <li>Las extensiones del archivo de Excel a importar son .xlsx".</li>
-		                    <li>Es necesario que los datos coincidan con la columna correspondiente
-		                    </li>
-		                    <li>La estructura del archivo <code>NO</code>
-		                        es modificable, solo recibe las columnas que se muestran en el ejemplo.
-		                        Si se agregan columnas distintas a estas,
-		                        el sistema puede tener un comportamiento inestable y no registrar sus datos.</li>
-		                    <li>El importador solo carga archivos con un  máximo de
-		                       <strong><em>1000 registros </em></strong> por cada uno.</li>
-		                    <li>El tiempo de importación dependerá de los registros que contenga el archivo.</li>
-		                    <ul>Al terminar la carga, le mostrará un mensaje del estado de la importacion:</ul>
-		                      <ul><strong><font color= "green"><em>Archivo Importado Exitosamente</em>
-		                      </font></strong>:
-		                        Cuando su archivo fue importado.</ul>
-		                      <ul><strong><font color= "red"><em>El archivo importado contiene Errores</em>
-		                      </font></strong> :
-		                         Cuando su archivo no fue importado porque algunos datos estan vacios.</ul>
-		                    <li>Si el archivo contiene filas vacias o el contenido no respeta el tipo de dato
-		                      de la estructura del archivo,  el sistema especificará la(s)
-		                      <font color= "blue">columna</font> (s) y
-		                      <font color= "blue">fila</font> (s) del dato(s) erróneo(s)
-		                      en la parte inferior del importador.</li>
+		                   
 		                    <li> <strong><em>Nota:</em></strong>
 		                      Puede descargar un archivo de ejemplo, presionando el siguiente botón
 		                      <button class="btn btn-success waves-effect">
 		                         <b><FONT COLOR="white" >
-		                           <a href="<?= Url::to('@web/importador_titulos.xlsx', true) ?>" style="color: white; font-size: 14px;" >
+		                           <a href="<?= Url::to('@web/importador_titulos_v3.xlsx', true) ?>" style="color: white; font-size: 14px;" >
 		                           Ejemplo de archivo a Importar</a></FONT></b>
 		                      </button>  Para visualizar el formato del mismo e importar correctamente
 		                      la información que desea.
@@ -113,6 +88,7 @@ $this->title = 'Generar Títulos XML';
 			                	</tr>
 			                	<?php 
 			                	foreach ($array_revision as $key => $value) {
+			                	    //print_r($array_revision);die();
 			                		echo '<tr>';
 				                		echo '<td style="border: 1px solid;border-color: brown">';
 				                			echo $value['institucion'];

@@ -52,6 +52,10 @@ class TitulosController extends Controller
         ];
         return $behaviors;
     }
+    
+    function htmlsan($htmlsanitize){
+        return $htmlsanitize = htmlspecialchars($htmlsanitize, ENT_QUOTES|ENT_HTML5);
+    }
 
  
     public function actionFirmarxml()
@@ -79,6 +83,33 @@ class TitulosController extends Controller
         ]);
 
     }
+    
+     public function actionTestxml()
+    {
+        $instituciones = Institucion::find()->all();
+        $rol = AuthAssignment::findOne(['user_id' => Yii::$app->user->getId()]);
+        $rol = (!is_null($rol))?$rol->item_name:"No asignado";
+        if($rol == "universidad"){
+            $in = Yii::$app->user->identity->instituciones;
+            if(!is_null($in)){
+                $instituciones = Institucion::find()->where('cveInstitucion IN ('.$in.')')->all();
+            }else{
+                $instituciones = [];
+            } 
+        }
+        $busca_instituciones =  ArrayHelper::map(
+            $instituciones,
+            'cveInstitucion',
+            'nombreInstitucion'
+        );
+        $formulario = new FirmaTituloForm();
+         return $this->render('testxml',[
+            'busca_instituciones' => $busca_instituciones,
+            'formulario' => $formulario
+        ]);
+
+    }
+
 
     public function actionDescargaxml()
     {
@@ -89,7 +120,12 @@ class TitulosController extends Controller
             $alumnos = trim($formulario->alumnos,",");
             $arr_alumnos = explode(",", $alumnos);
             $nombre_zip = "";
-            if(count($arr_alumnos) > 1){
+            $test = false;
+            if(isset($data['test']) && $data['test'] == 1){
+                $test = true;
+            }
+            
+            if(count($arr_alumnos) > 1 && $test == false){
                 $zip = new \ZipArchive;
                 $nombre_zip = 'xml/'.date("H:i:s").'_titulos.zip';
                 if (!$zip->open($nombre_zip, \ZipArchive::CREATE) === TRUE){
@@ -108,7 +144,12 @@ class TitulosController extends Controller
                     \Yii::$app->session->setFlash('error', 'No existe Información de título electrónico');
                     return $this->redirect(['titulos/firmarxml']);
                 }
-                $carrera = Carrera::findOne(['cveCarrera' => $profesionista->cveCarrera]);
+                if(!is_null($profesionista->cveInstitucion) && $profesionista->cveInstitucion != ""){
+                    $carrera = Carrera::findOne(['cveCarrera' => $profesionista->cveCarrera,'cveInstitucion' => $profesionista->cveInstitucion]);
+                }else{
+                    $carrera = Carrera::findOne(['cveCarrera' => $profesionista->cveCarrera]);
+                }
+                
                 if(is_null($carrera)){
                     \Yii::$app->session->setFlash('error', 'No existe la carrera del profesionista');
                     return $this->redirect(['titulos/firmarxml']);
@@ -123,15 +164,38 @@ class TitulosController extends Controller
                     \Yii::$app->session->setFlash('error', 'No existen responsables para la institución');
                     return $this->redirect(['titulos/firmarxml']);
                 }
-                $expedicion = Expedicion::findOne(['curpProfesionista' => $curp]);
+                $expedicion = Expedicion::findOne(['idExpedicion' => $profesionista->idExpedicion]);
                 if(is_null($expedicion)){
                     \Yii::$app->session->setFlash('error', 'No existe el expedicion para el profesionista');
                     return $this->redirect(['titulos/firmarxml']);
                 }
-                $antecedente = Antecedente::findOne(['curpProfesionista' => $curp]);
+                $antecedente = Antecedente::findOne(['folioControl' => $profesionista->folioControl]);
                 if(is_null($antecedente)){
                     \Yii::$app->session->setFlash('error', 'No existe el antecedente para el profesionista');
                     return $this->redirect(['titulos/firmarxml']);
+                }
+                
+                
+                if($profesionista->fechaInicio == "0000-00-00"){
+                    $profesionista->fechaInicio = "";
+                }
+                if($profesionista->fechaTerminacion == "0000-00-00"){
+                    $profesionista->fechaTerminacion = "";
+                }
+                if( $expedicion->fechaExpedicion == "0000-00-00"){
+                    $expedicion->fechaExpedicion  = "";
+                }
+                if($expedicion->fechaExamenProfesional == "0000-00-00"){
+                    $expedicion->fechaExamenProfesional = "";
+                }
+                if($expedicion->fechaExencionExamenProfesional == "0000-00-00"){
+                    $expedicion->fechaExencionExamenProfesional = "";
+                }
+                if($antecedente->fechaInicio == "0000-00-00"){
+                    $antecedente->fechaInicio = "";
+                }
+                if($antecedente->fechaTerminacion == "0000-00-00"){
+                    $antecedente->fechaTerminacion = "";
                 }
 
                 $xw = xmlwriter_open_memory();
@@ -152,14 +216,19 @@ class TitulosController extends Controller
                 xmlwriter_start_attribute($xw, 'folioControl');
                     xmlwriter_text($xw,$profesionista->folioControl);
                 xmlwriter_end_attribute($xw);
-                xmlwriter_start_attribute($xw, 'xsi:shecmaLocation');
+                xmlwriter_start_attribute($xw, 'xsi:schemaLocation');
                     xmlwriter_text($xw,$titulo_electronico->xsiShecmaLocation);
                 xmlwriter_end_attribute($xw);
                     // Start a child element
                     xmlwriter_start_element($xw, 'FirmaResponsables'); //INICA RESPONSABLES
+                    $cadena_1 = "";
+                    $firma_1 = "";
+                    $cadena_2 = "";
+                    $firma_2 = "";
                     foreach ($responsables as $r => $responsable) {
                         if($r == 0){
-                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->cargo|$responsable->abrTitulo|$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|$expedicion->fechaExamenProfesional|$expedicion->fechaExencionExamenProfesional|$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa|$antecedente->fechaInicio|$antecedente->fechaTerminacion|$antecedente->noCedula||";
+                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->cargo|$responsable->abrTitulo|$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera|$profesionista->fechaInicio|$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento|$carrera->numeroRvoe|$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido|$profesionista->segundoApellido|$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|$expedicion->fechaExamenProfesional|$expedicion->fechaExencionExamenProfesional|$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa|$antecedente->fechaInicio|$antecedente->fechaTerminacion|$antecedente->noCedula||";
+                            $cadena_1 = $cadena_original;
                             $formulario->archivo_cer1 = UploadedFile::getInstance($formulario, 'archivo_cer1');
                             $tmp_file1_cer = $formulario->archivo_cer1->tempName;
                             $cer_file = file_get_contents($tmp_file1_cer);
@@ -168,6 +237,7 @@ class TitulosController extends Controller
                             $tmp_file1_key = $formulario->archivo_key1->tempName;
                             $nombre_key = $formulario->archivo_key1->name;
                             $respuesta = UtilidadesHelper::generarFirma($tmp_file1_key,$nombre_key,$formulario->password1,$cadena_original);
+                            //print_r($respuesta['response']->data);die();
                             if($respuesta['code'] != 200 | !isset($respuesta['response']->data)){
                                 \Yii::$app->session->setFlash('error', 'Datos inconsistentes en la e.firma');
                                 return $this->redirect(['titulos/firmarxml']);
@@ -177,7 +247,7 @@ class TitulosController extends Controller
                                 \Yii::$app->session->setFlash('error', 'Datos inconsistentes en la e.firma');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
-
+                            $firma_1 = $data['firma'];
                             xmlwriter_start_element($xw, 'FirmaResponsable');
                                 xmlwriter_start_attribute($xw, 'nombre');
                                     xmlwriter_text($xw,$responsable->nombre);
@@ -213,8 +283,9 @@ class TitulosController extends Controller
                                 xmlwriter_end_attribute($xw);
                             xmlwriter_end_element($xw);
 
-                        }else if($r == 1){
-                           $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->cargo|$responsable->abrTitulo|$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera||$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento||$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido||$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|$expedicion->fechaExamenProfesional|$expedicion->fechaExencionExamenProfesional|$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa|$antecedente->fechaInicio|$antecedente->fechaTerminacion|$antecedente->noCedula||";
+                        }else if($r == 1 && UploadedFile::getInstance($formulario, 'archivo_cer2') !== null ){
+                            $cadena_original = "||1.0|$profesionista->folioControl|$responsable->curp|$responsable->idCargo|$responsable->cargo|$responsable->abrTitulo|$institucion->cveInstitucion|$institucion->nombreInstitucion|$carrera->cveCarrera|$carrera->nombreCarrera|$profesionista->fechaInicio|$profesionista->fechaTerminacion|$carrera->idAutorizacionReconocimiento|$carrera->autorizacionReconocimiento|$carrera->numeroRvoe|$profesionista->curp|$profesionista->nombre|$profesionista->primerApellido|$profesionista->segundoApellido|$profesionista->correoElectronico|$expedicion->fechaExpedicion|$expedicion->idModalidadTitulacion|$expedicion->modalidadTitulacion|$expedicion->fechaExamenProfesional|$expedicion->fechaExencionExamenProfesional|$expedicion->cumplioServicioSocial|$expedicion->idFundamentoLegalServicioSocial|$expedicion->fundamentoLegalServicioSocial|$expedicion->idEntidadFederativa|$expedicion->entidadFederativa|$antecedente->institucionProcedencia|$antecedente->idTipoEstudioAntecedente|$antecedente->tipoEstudioAntecedente|$antecedente->idEntidadFederativa|$antecedente->entidadFederativa|$antecedente->fechaInicio|$antecedente->fechaTerminacion|$antecedente->noCedula||";
+                            $cadena_2 = $cadena_original;
                             $formulario->archivo_cer2 = UploadedFile::getInstance($formulario, 'archivo_cer2');
                             $formulario->archivo_key2 = UploadedFile::getInstance($formulario, 'archivo_key2');
                             $tmp_file2_cer = $formulario->archivo_cer2->tempName;
@@ -222,7 +293,9 @@ class TitulosController extends Controller
                             $nombre_key = $formulario->archivo_key2->name;
                             $cer_file = file_get_contents($tmp_file2_cer);
                             $cer_base64 = base64_encode($cer_file);
+                           
                             $respuesta = UtilidadesHelper::generarFirma($tmp_file2_key,$nombre_key,$formulario->password2,$cadena_original);
+                            
                             if($respuesta['code'] != 200 | !isset($respuesta['response']->data)){
                                 \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
                                 return $this->redirect(['titulos/firmarxml']);
@@ -232,7 +305,8 @@ class TitulosController extends Controller
                                 \Yii::$app->session->setFlash('error', 'Ocurrió un error al generar la firma, Posible causa: Contraseña de .key incorrecta');
                                 return $this->redirect(['titulos/firmarxml']);
                             }
-
+                            $firma_2 = $data['firma'];
+                            //print_r($data['firma']);die();
                             xmlwriter_start_element($xw, 'FirmaResponsable');
                                 xmlwriter_start_attribute($xw, 'nombre');
                                     xmlwriter_text($xw,$responsable->nombre);
@@ -270,6 +344,18 @@ class TitulosController extends Controller
                         }
                     }
                     xmlwriter_end_element($xw); // TERMINA FIRMARESPONSABLES
+                    
+                    if($test){
+                        echo '<div style="margin:15px;"><h3> Cadena original responsable 1: </h3>';
+                        echo "<p> $cadena_1; </p>"; 
+                        echo '<h3> Firma responsable 1: </h3>';
+                        echo "<p> $firma_1; </p>"; 
+                        echo '<h3> Cadena original responsable 2: </h3>';
+                        echo "<p> $cadena_2; </p><br>"; 
+                        echo '<h3> Firma responsable 2: </h3>';
+                        echo "<p> $firma_2; </p></div>"; 
+                        die();
+                    }
 
                     xmlwriter_start_element($xw, 'Institucion'); //INICIA INSTITUCION
                         xmlwriter_start_attribute($xw, 'cveInstitucion');
@@ -287,18 +373,27 @@ class TitulosController extends Controller
                         xmlwriter_start_attribute($xw, 'nombreCarrera');
                             xmlwriter_text($xw,$carrera->nombreCarrera);
                         xmlwriter_end_attribute($xw);
-                        xmlwriter_start_attribute($xw, 'fechaInicio');
-                            xmlwriter_text($xw,$profesionista->fechaInicio);
-                        xmlwriter_end_attribute($xw);
-                        xmlwriter_start_attribute($xw, 'fechaTerminacion');
-                            xmlwriter_text($xw,$profesionista->fechaTerminacion);
-                        xmlwriter_end_attribute($xw);
+                        if(strlen($profesionista->fechaInicio) > 0){
+                            xmlwriter_start_attribute($xw, 'fechaInicio');
+                                xmlwriter_text($xw,$profesionista->fechaInicio);
+                            xmlwriter_end_attribute($xw);
+                        }
+                        if(strlen($profesionista->fechaTerminacion) > 0){
+                            xmlwriter_start_attribute($xw, 'fechaTerminacion');
+                                xmlwriter_text($xw,$profesionista->fechaTerminacion);
+                            xmlwriter_end_attribute($xw);
+                        }
                         xmlwriter_start_attribute($xw, 'idAutorizacionReconocimiento');
                             xmlwriter_text($xw,$carrera->idAutorizacionReconocimiento);
                         xmlwriter_end_attribute($xw);
                         xmlwriter_start_attribute($xw, 'autorizacionReconocimiento');
                             xmlwriter_text($xw,$carrera->autorizacionReconocimiento);
                         xmlwriter_end_attribute($xw);
+                         if(strlen($carrera->numeroRvoe) > 0){
+                            xmlwriter_start_attribute($xw, 'numeroRvoe');
+                                xmlwriter_text($xw,$carrera->numeroRvoe);
+                            xmlwriter_end_attribute($xw);
+                        }
                     xmlwriter_end_element($xw);//TERMINA CARRERA   
 
                     xmlwriter_start_element($xw, 'Profesionista'); //INICIA Profesionista
@@ -332,6 +427,11 @@ class TitulosController extends Controller
                         if(strlen($expedicion->fechaExamenProfesional) > 0){
                             xmlwriter_start_attribute($xw, 'fechaExamenProfesional');
                                 xmlwriter_text($xw,$expedicion->fechaExamenProfesional);
+                            xmlwriter_end_attribute($xw);
+                        }
+                        if(strlen($expedicion->fechaExencionExamenProfesional) > 0){
+                            xmlwriter_start_attribute($xw, 'fechaExencionExamenProfesional');
+                                xmlwriter_text($xw,$expedicion->fechaExencionExamenProfesional);
                             xmlwriter_end_attribute($xw);
                         }
                         xmlwriter_start_attribute($xw, 'cumplioServicioSocial');
@@ -375,22 +475,25 @@ class TitulosController extends Controller
                         xmlwriter_start_attribute($xw, 'fechaTerminacion');
                             xmlwriter_text($xw,$antecedente->fechaTerminacion);
                         xmlwriter_end_attribute($xw);
+                        if(strlen($antecedente->noCedula) > 0){
+                            xmlwriter_start_attribute($xw, 'noCedula');
+                                xmlwriter_text($xw,$antecedente->noCedula);
+                            xmlwriter_end_attribute($xw);
+                        }
                     xmlwriter_end_element($xw);//TERMINA Antecedente   
 
                 xmlwriter_end_element($xw); // TERMINA TITULO
                 xmlwriter_end_document($xw);
                 //xmlwriter_text($xw, 'This is a sample text, ä');
 
-                file_put_contents("xml/".$curp.'.xml',xmlwriter_output_memory($xw));
+                file_put_contents("xml/".$profesionista->nombre." ".$profesionista->primerApellido." ".$profesionista->segundoApellido.'.xml',xmlwriter_output_memory($xw));
                 if(count($arr_alumnos) == 1){
-                     \Yii::$app->session->setFlash('success', 'Xml generado con éxito');
-                    return Yii::$app->response->sendFile("xml/".$curp.'.xml');
+                    return Yii::$app->response->sendFile("xml/".$profesionista->nombre." ".$profesionista->primerApellido." ".$profesionista->segundoApellido.'.xml');
                 }else{
-                    $zip->addFile("xml/".$curp.'.xml');
+                    $zip->addFile("xml/".$profesionista->nombre." ".$profesionista->primerApellido." ".$profesionista->segundoApellido.'.xml');
                 }
             }
             $zip->close();
-            \Yii::$app->session->setFlash('success', 'Xml generado con éxito');
             return Yii::$app->response->sendFile($nombre_zip);
         }
     }
@@ -591,12 +694,15 @@ class TitulosController extends Controller
                                         'cveCarrera' => $cveCarrera,
                                         'curp' => $curp,
                                         'nombre' => $nombre,
+                                        'primerApellido' => $primerApellido,
+                                        'segundoApellido' => $segundoApellido,
                                     ];
                                     
                                 }
                             }
                         }
                     }
+                    //print_r($array_carreras);die();
 
                     $bandera_error = false;
                     $error = "";
@@ -641,10 +747,11 @@ class TitulosController extends Controller
                             }
                         }
                     }
+                    //print_r($array_profesionistas);die();
                     foreach ($array_carreras as $key => $carrera) {
                         foreach ($array_profesionistas as $key1 => $profesionista) {
                             if($profesionista['cveCarrera'] == $carrera['cveCarrera']){
-                                $array_revision[$carrera['cveInstitucion']]['profesionistas'][]= $profesionista['curp']." - ".$profesionista['nombre'];
+                                $array_revision[$carrera['cveInstitucion']]['profesionistas'][]= "* ".$profesionista['nombre']." ".$profesionista['primerApellido']." ".$profesionista['segundoApellido'];
                             }
                         }
                     }
@@ -672,7 +779,8 @@ class TitulosController extends Controller
                         'folioControl',
                         'idExpedicion',
                         'fechaInicio',
-                        'fechaTerminacion'
+                        'fechaTerminacion',
+                        'cveInstitucion'
                     ];
                     $col_expedicion = [
                         'idExpedicion',
@@ -686,7 +794,6 @@ class TitulosController extends Controller
                         'fundamentoLegalServicioSocial',
                         'idEntidadFederativa',
                         'entidadFederativa',
-                        'curpProfesionista'
                     ];
                     $col_antecedentes = [
                         'institucionProcedencia',
@@ -697,7 +804,7 @@ class TitulosController extends Controller
                         'fechaInicio',
                         'fechaTerminacion',
                         'noCedula',
-                        'curpProfesionista'
+                        'folioControl'
                     ];
                     $col_responsable1 = [
                         'nombre',
@@ -764,6 +871,7 @@ class TitulosController extends Controller
                                 //institucion
                                     $cveInstitucion = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreInstitucion = trim(ArrayHelper::getValue($value, [1], ''));
+                                    $nombreInstitucion = self::htmlsan($nombreInstitucion);
                                     $data_institucion[] = [
                                         'cveInstitucion' => $cveInstitucion,
                                         'nombreInstitucion' => $nombreInstitucion
@@ -786,10 +894,10 @@ class TitulosController extends Controller
                                     $idCargo = trim(ArrayHelper::getValue($value, [4], ''));
                                     $cargo = trim(ArrayHelper::getValue($value, [5], ''));
                                     $abrTitulo = trim(ArrayHelper::getValue($value, [6], ''));
-                                    $sello = trim(ArrayHelper::getValue($value, [7], ''));
-                                    $certificadoResponsable = trim(ArrayHelper::getValue($value, [8], ''));
-                                    $noCertificadoResponsable = trim(ArrayHelper::getValue($value, [9], ''));
-                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [10], ''));
+                                    $sello = "";
+                                    $certificadoResponsable = "";
+                                    $noCertificadoResponsable = trim(ArrayHelper::getValue($value, [7], ''));
+                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [8], ''));
 
                                     $data_responsables[] = [
                                         'nombre' => $nombre,
@@ -831,10 +939,10 @@ class TitulosController extends Controller
                                     $idCargo = trim(ArrayHelper::getValue($value, [4], ''));
                                     $cargo = trim(ArrayHelper::getValue($value, [5], ''));
                                     $abrTitulo = trim(ArrayHelper::getValue($value, [6], ''));
-                                    $sello = trim(ArrayHelper::getValue($value, [7], ''));
-                                    $certificadoResponsable = trim(ArrayHelper::getValue($value, [8], ''));
-                                    $noCertificadoResponsable = trim(ArrayHelper::getValue($value, [9], ''));
-                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [10], ''));
+                                    $sello = "";
+                                    $certificadoResponsable = "";
+                                    $noCertificadoResponsable = trim(ArrayHelper::getValue($value, [7], ''));
+                                    $cveInstitucion = trim(ArrayHelper::getValue($value, [8], ''));
 
                                     $data_responsables[] = [
                                         'nombre' => $nombre,
@@ -871,6 +979,7 @@ class TitulosController extends Controller
                                 //carrera
                                     $cveCarrera = trim(ArrayHelper::getValue($value, [0], ''));
                                     $nombreCarrera = trim(ArrayHelper::getValue($value, [1], ''));
+                                    $nombreCarrera = self::htmlsan($nombreCarrera);
                                     $idAutorizacionReconocimiento = trim(ArrayHelper::getValue($value, [2], ''));
                                     $autorizacionReconocimiento = trim(ArrayHelper::getValue($value, [3], ''));
                                     $numeroRvoe = trim(ArrayHelper::getValue($value, [4], ''));
@@ -908,6 +1017,7 @@ class TitulosController extends Controller
                                     $idExpedicion = trim(ArrayHelper::getValue($value, [7], ''));
                                     $fechaInicio = ArrayHelper::getValue($value, [8], '');
                                     $fechaTerminacion = ArrayHelper::getValue($value, [9], '');
+                                    $cveInstitucion = ArrayHelper::getValue($value, [10], '');
                                     $fechaInicio = (is_object($fechaInicio))?$fechaInicio->format('Y-m-d'):trim($fechaInicio);
                                     $fechaTerminacion = (is_object($fechaTerminacion))?$fechaTerminacion->format('Y-m-d'):trim($fechaTerminacion);
                                     $fechaInicio = (strlen($fechaInicio) > 1)?$fechaInicio:null;
@@ -923,7 +1033,8 @@ class TitulosController extends Controller
                                         'folioControl' => $folioControl,
                                         'idExpedicion' => $idExpedicion,
                                         'fechaInicio' => $fechaInicio,
-                                        'fechaTerminacion' => $fechaTerminacion
+                                        'fechaTerminacion' => $fechaTerminacion,
+                                        'cveInstitucion'   => $cveInstitucion
                                     ];
 
                                     $rows_profesionista['Profesionista'] = [
@@ -936,7 +1047,8 @@ class TitulosController extends Controller
                                         'folioControl' => $folioControl,
                                         'idExpedicion' => $idExpedicion,
                                         'fechaInicio' => $fechaInicio,
-                                        'fechaTerminacion' => $fechaTerminacion
+                                        'fechaTerminacion' => $fechaTerminacion,
+                                        'cveInstitucion'   => $cveInstitucion
                                     ];
                                     $newModel = new Profesionista();
                                     $newModel->load($rows_profesionista);
@@ -955,7 +1067,6 @@ class TitulosController extends Controller
                                     $fundamentoLegalServicioSocial = trim(ArrayHelper::getValue($value, [8],''));
                                     $idEntidadFederativa = trim(ArrayHelper::getValue($value, [9], ''));
                                     $entidadFederativa = trim(ArrayHelper::getValue($value, [10], ''));
-                                    $curpProfesionista = trim(ArrayHelper::getValue($value, [11], ''));
                                     $fechaExpedicion = (is_object($fechaExpedicion))?$fechaExpedicion->format('Y-m-d'):trim($fechaExpedicion);
                                     $fechaExamenProfesional = (is_object($fechaExamenProfesional))?$fechaExamenProfesional->format('Y-m-d'):trim($fechaExamenProfesional);
                                     $fechaExencionExamenProfesional = (is_object($fechaExencionExamenProfesional))?$fechaExencionExamenProfesional->format('Y-m-d'):trim($fechaExencionExamenProfesional);
@@ -972,8 +1083,7 @@ class TitulosController extends Controller
                                         'idFundamentoLegalServicioSocial' => $idFundamentoLegalServicioSocial,
                                         'fundamentoLegalServicioSocial' => $fundamentoLegalServicioSocial,
                                         'idEntidadFederativa' => $idEntidadFederativa,
-                                        'entidadFederativa' => $entidadFederativa,
-                                        'curpProfesionista' => $curpProfesionista
+                                        'entidadFederativa' => $entidadFederativa
                                     ];
 
                                     $rows_expedicion['Expedicion'] = [
@@ -987,8 +1097,7 @@ class TitulosController extends Controller
                                         'idFundamentoLegalServicioSocial' => $idFundamentoLegalServicioSocial,
                                         'fundamentoLegalServicioSocial' => $fundamentoLegalServicioSocial,
                                         'idEntidadFederativa' => $idEntidadFederativa,
-                                        'entidadFederativa' => $entidadFederativa,
-                                        'curpProfesionista' => $curpProfesionista
+                                        'entidadFederativa' => $entidadFederativa
                                     ];
                                     $newModel = new Expedicion();
                                     $newModel->load($rows_expedicion);
@@ -1006,7 +1115,7 @@ class TitulosController extends Controller
                                     $noCedula = trim(ArrayHelper::getValue($value, [7], ''));
                                     $fechaInicio = (is_object($fechaInicio))?$fechaInicio->format('Y-m-d'):trim($fechaInicio);
                                     $fechaTerminacion = (is_object($fechaTerminacion))?$fechaTerminacion->format('Y-m-d'):trim($fechaTerminacion);
-                                    $curpProfesionista = trim(ArrayHelper::getValue($value, [8], ''));
+                                    $folioControl = trim(ArrayHelper::getValue($value, [8], ''));
                                     $fechaInicio = (strlen($fechaInicio) > 1)?$fechaInicio:null;
 
 
@@ -1019,7 +1128,7 @@ class TitulosController extends Controller
                                         'fechaInicio' => $fechaInicio,
                                         'fechaTerminacion' => $fechaTerminacion,
                                         'noCedula' => $noCedula,
-                                        'curpProfesionista' => $curpProfesionista
+                                        'folioControl' => $folioControl
                                     ];
 
                                     $rows_antecedentes['Antecedente'] = [
@@ -1031,7 +1140,7 @@ class TitulosController extends Controller
                                         'fechaInicio' => $fechaInicio,
                                         'fechaTerminacion' => $fechaTerminacion,
                                         'noCedula' => $noCedula,
-                                        'curpProfesionista' => $curpProfesionista
+                                        'folioControl' => $folioControl
                                     ];
                                     $newModel = new Antecedente();
                                     $newModel->load($rows_antecedentes);
@@ -1061,7 +1170,7 @@ class TitulosController extends Controller
                                 $data_institucion
                             )->execute();
                         }
-                        
+                        //print_r($references_carrera);die();
                         foreach ($references_carrera as $newModel) {
                             if(!$newModel->validate()){
                                 $error .= "<br>Errores en Carrera: <br>";
@@ -1254,15 +1363,15 @@ class TitulosController extends Controller
             $data = Yii::$app->request->post();
             $password = ArrayHelper::getValue($data,'password', '');
             $instituciones = ArrayHelper::getValue($data,'institucion', []);
-            if($password == "7h8j9k0l"){
+            if($password == "cpi2020*"){
                 foreach ($instituciones as $i => $institucion) {
                     $busca_institucion = Institucion::findOne(['cveInstitucion' => $institucion]);
                     $busca_carreras = Carrera::findAll(['cveInstitucion' => $institucion]);
                     foreach ($busca_carreras as $c => $carrera) {
                         $busca_profesionista = Profesionista::findAll(['cveCarrera' => $carrera->cveCarrera]);
                         foreach ($busca_profesionista as $p => $profesionista) {
-                            $elimina_antecedentes = Antecedente::deleteAll(['curpProfesionista' => $profesionista->curp]);
-                            $elimina_expedicion = Expedicion::deleteAll(['curpProfesionista' => $profesionista->curp]);
+                            $elimina_antecedentes = Antecedente::deleteAll(['folioControl' => $profesionista->folioControl]);
+                            $elimina_expedicion = Expedicion::deleteAll(['idExpedicion' => $profesionista->idExpedicion]);
                             $profesionista->delete();
                         }
                         $carrera->delete();
@@ -1395,6 +1504,70 @@ class TitulosController extends Controller
             $busca_titulo = TitulosWs::findOne($id_titulo);
             $no_lote = ArrayHelper::getValue($busca_titulo,"numero_lote", '');
             $respuesta_envio = UtilidadesHelper::descargarTitulo(0,$no_lote,$usuario_ws,$password_ws);
+            if(isset($respuesta_envio['response']->data)){
+                //print_r($respuesta_envio['response']->data['titulosBase64']);die();
+                $decoded = base64_decode($respuesta_envio['response']->data['titulosBase64']);
+                $file = $no_lote.'.zip';
+                file_put_contents($file, $decoded);
+                return Yii::$app->response->sendFile($file);
+            }else{
+
+            }
+        }
+    }
+    
+     public function actionProd()
+    {
+        $searchModel  = new TituloWsSearch();
+        $dataProvider = $searchModel->searchProduccion(Yii::$app->request->queryParams);
+
+        return $this->render('prod', [
+            'searchModel'  => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+    
+    public function actionConsultarprod()
+    {
+       if (Yii::$app->request->isAjax) {
+            $data = Yii::$app->request->post();
+            $usuario_ws = ArrayHelper::getValue($data,"usuario_ws", '');
+            $password_ws = ArrayHelper::getValue($data,"password_ws", '');
+            $id_titulo = ArrayHelper::getValue($data,"id_titulo", '');
+            $busca_titulo = TitulosWs::findOne($id_titulo);
+            $no_lote = ArrayHelper::getValue($busca_titulo,"numero_lote", '');
+            $respuesta_envio = UtilidadesHelper::consultarTitulo(1,$no_lote,$usuario_ws,$password_ws);
+            return json_encode($respuesta_envio['response']->data);
+            
+        }
+    }
+
+    public function actionCancelarprod()
+    {
+       if (Yii::$app->request->isAjax) {
+            $data = Yii::$app->request->post();
+            $usuario_ws = ArrayHelper::getValue($data,"usuario_ws", '');
+            $password_ws = ArrayHelper::getValue($data,"password_ws", '');
+            $motivo_ws = ArrayHelper::getValue($data,"motivo_ws", '');
+            $folio_control = ArrayHelper::getValue($data,"folio_ws", '');
+            $id_titulo = ArrayHelper::getValue($data,"id_titulo", '');
+            $respuesta_envio = UtilidadesHelper::cancelarTitulo(1,$folio_control,$motivo_ws,$usuario_ws,$password_ws);
+            return json_encode($respuesta_envio['response']->data);
+            
+        }
+    }
+
+    public function actionDescargarprod()
+    {
+       if (Yii::$app->request->isPost) {
+            $data = Yii::$app->request->post();
+            //print_r($data);die();
+            $usuario_ws = ArrayHelper::getValue($data,"usuario_ws", '');
+            $password_ws = ArrayHelper::getValue($data,"password_ws", '');
+            $id_titulo = ArrayHelper::getValue($data,"id_titulo", '');
+            $busca_titulo = TitulosWs::findOne($id_titulo);
+            $no_lote = ArrayHelper::getValue($busca_titulo,"numero_lote", '');
+            $respuesta_envio = UtilidadesHelper::descargarTitulo(1,$no_lote,$usuario_ws,$password_ws);
             if(isset($respuesta_envio['response']->data)){
                 //print_r($respuesta_envio['response']->data['titulosBase64']);die();
                 $decoded = base64_decode($respuesta_envio['response']->data['titulosBase64']);

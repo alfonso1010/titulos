@@ -18,7 +18,8 @@ class FirmaTituloForm extends \yii\base\DynamicModel
 
     public function rules() {
        return [
-            [['alumnos','password1','archivo_cer1','archivo_key1','password2','archivo_cer2','archivo_key2'], 'required'],
+            [['alumnos','password1','archivo_cer1','archivo_key1'], 'required'],
+            [['password2'], 'safe'],
             [['archivo_cer1'], 'file', 'skipOnEmpty' => true, 'extensions' => 'cer'],
             [['archivo_key1'], 'file', 'skipOnEmpty' => true, 'extensions' => 'key'],
             [['archivo_cer2'], 'file', 'skipOnEmpty' => true, 'extensions' => 'cer'],

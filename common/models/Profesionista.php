@@ -37,8 +37,8 @@ class Profesionista extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['curp', 'nombre', 'primerApellido', 'correoElectronico', 'folioControl', 'cveCarrera','fechaTerminacion'], 'required'],
-            [['idExpedicion'], 'integer'],
+            [['curp', 'nombre', 'primerApellido', 'correoElectronico', 'folioControl', 'cveCarrera','fechaTerminacion','cveInstitucion'], 'required'],
+            [['idExpedicion'], 'string'],
             [['curp'], 'string', 'max' => 18],
             [['fechaInicio'], 'string'],
             [['nombre', 'primerApellido', 'segundoApellido', 'correoElectronico', 'folioControl'], 'string', 'max' => 100],
